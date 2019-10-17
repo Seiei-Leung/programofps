@@ -24,6 +24,7 @@ import progressBarCanvas from "../progressBarCanvas/progressBarCanvas";
 import ProgressBar from "../../vo/progressBar";
 import ProductLine from "../../vo/productLine";
 import M2V from "../../common/M2V";
+import DateUtil from "../../common/dateUtil";
 
 export default {
     data: function() {
@@ -168,6 +169,14 @@ export default {
         }
         this.productLineList = dataList;
         
+        // 获取工厂日历
+        var stimeStamp = 1571846400000;
+        var etimeStamp = 1572019200000
+        console.log(DateUtil.timeStampToDate(stimeStamp))
+        console.log(DateUtil.timeStampToDate(etimeStamp))
+        console.log(DateUtil.timeStampsToDayCount(stimeStamp, etimeStamp))
+        console.log(DateUtil.timeStampsToDateStrList(stimeStamp, etimeStamp));
+
 
 
 

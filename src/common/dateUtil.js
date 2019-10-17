@@ -94,12 +94,25 @@ export default class DateUtil {
     // 输出结果，格式形如 "2019-11-18"
     static timeStampToDate(timeStamp) {
         var time = new Date(timeStamp);
-        return (time.getFullYear() + "-" + DateUtil.zeroFillOfMonthOrDay(time.getMonth() + 1) + "-" + DateUtil.zeroFillOfMonthOrDay(time.getDay()));
+        return (time.getFullYear() + "-" + DateUtil.zeroFillOfMonthOrDay(time.getMonth() + 1) + "-" + DateUtil.zeroFillOfMonthOrDay(time.getDate()));
     }
 
     // 两个时间戳转为 天数
     static timeStampsToDayCount(sTimeStamp, eTimeStamp) {
         var timeStamp = eTimeStamp - sTimeStamp;
         return Math.ceil(timeStamp / DateUtil.timeStampOfOneDay)
+    }
+
+    // 两个时间戳转为 日期列表
+    // 如 sTimeStamp=1571846400000, eTimeStamp=1572019200000
+    // 返回的是二者之间的日期类别，即 ["2019-10-24", "2019-10-25", "2019-10-26"]
+    static timeStampsToDateStrList(sTimeStamp, eTimeStamp) {
+        var resultList = [];
+        var count = DateUtil.timeStampsToDayCount(sTimeStamp, eTimeStamp);
+        resultList.push(DateUtil.timeStampToDate(sTimeStamp));
+        for (var i=0; i<count; i++) {
+            resultList.push(DateUtil.timeStampToDate(sTimeStamp + (i + 1)*DateUtil.timeStampOfOneDay))
+        }
+        return resultList;
     }
 }
