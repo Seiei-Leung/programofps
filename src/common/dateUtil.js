@@ -33,6 +33,21 @@ export default class DateUtil {
         return monthListOfShow;
     }
 
+    // 获取日期栏显示 year 的列表
+    static get yearListOfShow() {
+        var monthListOfShow = DateUtil.monthListOfShow;
+        var firstYearStr = monthListOfShow[0];
+        var lastYearStr = monthListOfShow[monthListOfShow.length-1];
+        var list = [];
+        firstYearStr = firstYearStr.split("-")[0];
+        lastYearStr = lastYearStr.split("-")[0];
+        list.push(firstYearStr);
+        if (firstYearStr != lastYearStr) {
+            list.push(lastYearStr);
+        }
+        return list;
+    }
+
     // 显示的总天数
     static get dayCountOfShow() {
         var now = new Date();
@@ -114,5 +129,11 @@ export default class DateUtil {
             resultList.push(DateUtil.timeStampToDate(sTimeStamp + (i + 1)*DateUtil.timeStampOfOneDay))
         }
         return resultList;
+    }
+
+    // 画布索引转化为日期字符串格式，如 "2019-10-19"
+    static indexToDateStr(index) {
+        var timeStamp = DateUtil.firstTimeStampOfShow + index * DateUtil.timeStampOfOneDay;
+        return DateUtl.timeStampToDate(timeStamp);
     }
 }

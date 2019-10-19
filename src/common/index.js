@@ -8,7 +8,7 @@ export default{
 		Vue.mixin({
 			data: function() {
 				return {
-					seieiURL: "http://www.etscn.com.cn:38080",
+					seieiURL: "http://localhost:8080/api/",
 					scrollX: null,
 					scrollY: null,
 					scrollDirection: null,

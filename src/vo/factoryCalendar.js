@@ -1,3 +1,5 @@
+import DateUtil from "../common/dateUtil";
+
 export default class FactoryCalendar {
     
     constructor() {
@@ -16,18 +18,38 @@ export default class FactoryCalendar {
      * @param {*} Fri 星期五是否要上班
      * @param {*} Sat 星期六是否要上班
      * @param {*} Sun 星期天是否要上班
+     * @param {*} festivalDay 节日信息
      */
-    addDetailAboutWorkDay(year, Mon, Tues, Wed, Thurs, Fri, Sat, Sun) {
+    addDetailByYear(year, Mon, Tues, Wed, Thurs, Fri, Sat, Sun, festivalDay) {
         this.yearList.push(year);
-        this.DayList.push([Mon, Tues, Wed, Thurs, Fri, Sat, Sun]);
+        this.dayList.push([Sun, Mon, Tues, Wed, Thurs, Fri, Sat]);
+        this.festivalDayList.push(festivalDay);
     }
 
     /**
-     * 新增节假日信息
-     * @param {*} festivalDay 节假日日期，如 2019-10-17
+     * 某天是否为非工作日
+     * @param {*} srt 时间，如 2019-10-17 
      */
-    addDetailAboutFestival(festivalDay) {
-        this.festivalDayList.push(festivalDay);
+    isHoliday(timeStamp) {
+        var time = new Date(timeStamp);
+        var year = time.getFullYear();
+        var weekDay = time.getDay();
+        var index = this.yearList.indexOf(year);
+        if (index == -1) {
+            return null;
+        }
+        var dayList = this.dayList[index];
+        console.log(this.festivalDayList[index]);
+        var dateTemp = this.festivalDayList[index].find((item) => {
+            return item == DateUtil.timeStampToDate(timeStamp);
+        })
+        if (dateTemp != null) {
+            return true;
+        }
+        if (!dayList[weekDay]) {
+            return true;
+        }
+        return false;
     }
     
 }

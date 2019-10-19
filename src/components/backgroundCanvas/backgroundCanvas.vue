@@ -32,12 +32,17 @@ export default {
         var backgroundDom = this.$refs.background;
         var ctx = backgroundDom.getContext("2d");//设置2D渲染区
         ctx.lineWidth = CONST.STYLEOFCELL.lineWidth; //设置线的宽度
-        ctx.strokeStyle = '#ddd';
+        ctx.strokeStyle = CONST.STYLEOFCELL.borderColor;
+        ctx.fillStyle = CONST.STYLEOFCELL.activedBackgroundColor;
         var dayCountOfShow = this.dayCountOfShow;
         var countOfProductLines = this.countOfProductLines;
         for (var n=0; n<countOfProductLines; n++) {
             for (var m=0; m<dayCountOfShow; m++) {
+                if (this.factoryCalendarObj.isHoliday(DateUtil.indexToDateStr(m))) {
+                    ctx.fillRect(m*(CONST.STYLEOFCELL.width + 2*CONST.STYLEOFCELL.lineWidth)+0.5, n*(CONST.STYLEOFCELL.height + 2*CONST.STYLEOFCELL.lineWidth)+0.5, (CONST.STYLEOFCELL.width + 2*CONST.STYLEOFCELL.lineWidth), (CONST.STYLEOFCELL.height + 2*CONST.STYLEOFCELL.lineWidth))
+                }
                 ctx.strokeRect(m*(CONST.STYLEOFCELL.width + 2*CONST.STYLEOFCELL.lineWidth)+0.5, n*(CONST.STYLEOFCELL.height + 2*CONST.STYLEOFCELL.lineWidth)+0.5, (CONST.STYLEOFCELL.width + 2*CONST.STYLEOFCELL.lineWidth), (CONST.STYLEOFCELL.height + 2*CONST.STYLEOFCELL.lineWidth))
+
             }
         }
     },

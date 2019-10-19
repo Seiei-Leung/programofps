@@ -37,7 +37,9 @@ export default class Const {
         return {
             width: 22,
             height: 34,
-            lineWidth: 1
+            lineWidth: 1,
+            borderColor: "#ddd",
+            activedBackgroundColor: "#fffaf2"
         }
     }
 

@@ -6,10 +6,10 @@ Vue.use(Vuex);
 
 export default new Vuex.Store({
 	state: {
-		isShowNumberofwork: false,
-		isShowWorkingHours: false,
-		ctxOfSource: null,
-		ctxOfTemp: null,
+		isShowNumberofwork: false, // 是否显示人数
+		isShowWorkingHours: false, // 是否显示工作时间
+		ctxOfSource: null, // 源画布 上下文
+		ctxOfTemp: null, // 移动画布 上下文
 		cssAboutScroll: {
 			// 左侧生产线 bar
 			styleOfProductLinesClass: {
@@ -24,7 +24,10 @@ export default new Vuex.Store({
 				top: CONST.STYLEOFTOOLBAR.height - CONST.STYLEOFTOOLBAR.lineWidth + "px",
 				left: CONST.STYLEOFPRODUCTLINESBAR.width - CONST.STYLEOFPRODUCTLINESBAR.lineWidth + "px"
 			}
-		}
+		}, // 用于滚动信息
+		factoryCalendarObj: {}, // 工厂日历
+
+
 	},
 	mutations: {
 		// 设置画布
@@ -70,10 +73,10 @@ export default new Vuex.Store({
 					left: CONST.STYLEOFPRODUCTLINESBAR.width - CONST.STYLEOFPRODUCTLINESBAR.lineWidth + "px"
 				}
 			}
-
+		},
+		// 设置工厂日历
+		setFactoryCalendarObj(state, factoryCalendarObj) {
+			state.factoryCalendarObj = factoryCalendarObj;
 		}
-
-
-
 	}
 })

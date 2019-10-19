@@ -7,24 +7,27 @@ import Const from "../common/const";
 // 进度条类
 export default class ProgressBar {
 
-    constructor(productLineIndex, orderNo, btime, etime, quantityOfWork, hadDoneQuantityOfWork) {
+    constructor(productLineIndex, productionlineid, qtyFinish, styleName, sam, qtyOfBatchedDelivery, startTime, endTime, msgOfProgressBar) {
         this.productLineIndex = productLineIndex; // 所在生产线索引
-        this.orderNo = orderNo; // 制单号
-        this.btime = btime; // 开启日期
-        this.etime = etime; // 完工日期
-        this.quantityOfWork = quantityOfWork; // 工作总量
-        this.hadDoneQuantityOfWork = hadDoneQuantityOfWork; // 已经完成数量
-        
+        this.productionlineid = productionlineid;
+        this.qtyFinish = qtyFinish;
+        this.styleName = styleName;
+        this.sam = sam;
+        this.qtyOfBatchedDelivery = qtyOfBatchedDelivery;
+
+        this.startTime = startTime;
+        this.endTime = endTime;
+        this.msgOfProgressBar = msgOfProgressBar; // 排产进度条详情
     }
 
-    // 重新设定
-
-
-
+    // 获取详情信息
+    get msgOfProgressBar() {
+        return this.msgOfProgressBar;
+    }
 
     // 获取工作量百分比
     get getPercentOfQuantityOfWork() {
-        return (this.hadDoneQuantityOfWork / this.quantityOfWork).toFixed(2);
+        return (this.qtyFinish / this.qtyOfBatchedDelivery).toFixed(2);
     }
 
     // 根据不同的输出线指定最后完工日期
@@ -39,7 +42,7 @@ export default class ProgressBar {
 
     // 获取总天数
     get getDayCount() {
-        return DateUtil.timeStampsToDayCount(this.btime, this.etime);
+        return DateUtil.timeStampsToDayCount(this.startTime, this.endTime);
     }
 
     // 是否点击
@@ -59,7 +62,7 @@ export default class ProgressBar {
         return {
             width: M2V.dayCountToWidth(this.getDayCount),
             top: M2V.productLineIndexToY(this.productLineIndex),
-            left: M2V.btimeToX(this.btime),
+            left: M2V.startTimeToX(this.startTime),
         }
     }
 
