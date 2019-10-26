@@ -5,14 +5,20 @@ export default class StrUtil {
 
     }
 
-    // 数字添加 px
+    /**
+     * 数字添加 “px”
+     * @param {*} str 数字
+     */
     static takeOffPX(str) {
         return str.split("px")[0];
     }
 
-    // 小数转化为百分比，如 90%
+    /**
+     * 小数转化为百分比
+     * @param {*} decimal 小数
+     */
     static decimalToPercent(decimal) {
-        return (decimal*100) + "%";
+        return (decimal*100).toFixed(0) + "%";
     }
 
 }

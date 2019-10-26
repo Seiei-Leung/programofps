@@ -1,5 +1,5 @@
 <template>
-    <div class="topToolBar-component zIndexSuper">
+    <div class="topToolBar-component zIndexSuperTop">
         <!-- 编辑工具栏 -->
         <div class="item" @click="historyBack">撤回<i class="iconfont icon-jijiangdaozhang"></i></div>
         <div class="item" @click="historyRemake">重做<i class="iconfont icon-zuji"></i></div>

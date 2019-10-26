@@ -26,8 +26,13 @@ export default new Vuex.Store({
 			}
 		}, // 用于滚动信息
 		factoryCalendarObj: {}, // 工厂日历
-
-
+		productLineList: [], // 生产线源数据
+		isShowToast: false, // 是否显示 toast 提示
+		toastTxt: "", // toast 提示文本
+		isShowWindowOfAddProgress: false, // 是否显示添加进度条窗口
+		waitingAddProgressList: [], // 等待被添加的排产详情列表
+		activedProgressBar: null, // 拖动激活的进度条
+		isShowCtxOfTmp: false, // 是否显示移动画布
 	},
 	mutations: {
 		// 设置画布
@@ -77,6 +82,35 @@ export default new Vuex.Store({
 		// 设置工厂日历
 		setFactoryCalendarObj(state, factoryCalendarObj) {
 			state.factoryCalendarObj = factoryCalendarObj;
+		},
+		// 设置生产线源数据
+		setProductLineList(state, productLineList) {
+			state.productLineList = productLineList;
+		},
+		// 显示 toast 
+		showToast(state, toastTxt, time) {
+			state.toastTxt = toastTxt;
+			state.isShowToast = true;
+		},
+		// 隐藏 toast
+		hideToast(state) {
+			state.isShowToast = false;
+		},
+		// 切换显示添加进度条窗口
+		toggleIsShowWindowOfAddProgress(state) {
+			state.isShowWindowOfAddProgress = !state.isShowWindowOfAddProgress;
+		},
+		// 设置 waitingAddProgressList
+		setWaitingAddProgressList(state, waitingAddProgressList) {
+			state.waitingAddProgressList = waitingAddProgressList;
+		},
+		// 设置拖动激活 activedProgressBar
+		setActivedProgressBar(state, activedProgressBar) {
+			state.activedProgressBar = activedProgressBar;
+		},
+		// 切换移动画布
+		toggleIsShowCtxOfTmp(state) {
+			state.isShowCtxOfTmp = !state.isShowCtxOfTmp;
 		}
 	}
 })

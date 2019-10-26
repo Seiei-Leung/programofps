@@ -1,13 +1,13 @@
 <template>
     <div id="productLineBar-component">
         <!-- 生产线 -->
-        <div class="productLines zIndexTop" ref="productLinesBarHook" v-bind:style="styleOfProductLinesClass">
+        <div class="productLines zIndexSuper" ref="productLinesBarHook" v-bind:style="styleOfProductLinesClass">
             <div class="title" v-bind:style="styleOfTitleClass">
                 生产线
             </div>
             <div class="productLinesHook" v-bind:style="styleOfProductLinesHook">
                 <div class="productLine" v-for="(item, index) in productLineList" v-bind:key="index">
-                    {{item.name}}
+                    {{item.fullName}}
                 </div>
             </div>
         </div>

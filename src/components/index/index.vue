@@ -3,15 +3,29 @@
         <!-- 编辑工具栏 -->
         <v-topToolBar></v-topToolBar>
         <!-- 左侧生产线栏 -->
-        <v-productLinBar v-bind:productLineList="productLineList" ref="productLinesBarHook"></v-productLinBar>
+        <v-productLinBar
+            v-if="isDone"
+            v-bind:productLineList="productLineList"
+            ref="productLinesBarHook">
+        </v-productLinBar>
         <!-- 日期栏 -->
-        <v-dateBar></v-dateBar>
+        <v-dateBar 
+            v-if="isDone"
+        ></v-dateBar>
         <!-- 背景画布 -->
-        <v-backgroundCanvas v-bind:countOfProductLines="productLineList.length"></v-backgroundCanvas>
+        <v-backgroundCanvas
+            v-if="isDone"
+            v-bind:countOfProductLines="productLineList.length">
+        </v-backgroundCanvas>
         <!-- 装载进度条画布 -->
         <v-progressBarCanvas
+            v-if="isDone"
             v-bind:productLineList="productLineList"
         ></v-progressBarCanvas>
+        <!-- 右侧添加进度条窗口 -->
+        <v-windowOfAddProgressBar></v-windowOfAddProgressBar>
+        <!-- 提示组件 -->
+        <v-toast v-show="isShowToast" v-bind:txt="toastTxt"></v-toast>
     </div>
 </template>
 
@@ -26,46 +40,32 @@ import ProductLine from "../../vo/productLine";
 import M2V from "../../common/M2V";
 import DateUtil from "../../common/dateUtil";
 import FactoryCalendar from "../../vo/factoryCalendar";
+import windowOfAddProgressBar from "../windowOfAddProgressBar/windowOfAddProgressBar";
+import toast from "../toast/toast";
 
 export default {
     data: function() {
         return {
-            productLineList:[],
+            isDone: false, // 是否已经获取数据
         }
     },
     computed: {
+        // 生产线源数据
+        productLineList: function() {
+            return this.$store.state.productLineList;
+        },
+        // 是否显示 toast
+        isShowToast: function() {
+            return this.$store.state.isShowToast;
+        },
+        // toast 文本
+        toastTxt: function() {
+            return this.$store.state.toastTxt;
+        }
     },
     created: function() {
-        console.log(123);
         this.getFactoryCalendar();
-/*         var dataOfProductLine = [
-            {
-                id: "123",
-                name: "123",
-                progressList: [
-                    {
-                        orderNo: "123",
-                        btime: 1567353600000, // 9-6 new Date("2019-10-13 0:0:0").getTime()
-                        etime: 1570636800000, // 9-15
-                        quantityOfWork: 100,
-                        hadDoneQuantityOfWork: 30,
-                    },
-                ]
-            }
-        ];
-        // 获取 data 数据
-        var dataList = [];
-        for (var productLineIndex=0; productLineIndex<dataOfProductLine.length; productLineIndex++) {
-            var productLineData = dataOfProductLine[productLineIndex];
-            var progressObjList = []
-            for (var progressIndex=0; progressIndex<productLineData.progressList.length; progressIndex++) {
-                var progressData = productLineData.progressList[progressIndex];
-                var progressObj = new ProgressBar(productLineIndex, progressData.orderNo, progressData.btime, progressData.etime, progressData.quantityOfWork, progressData.hadDoneQuantityOfWork);
-                progressObjList.push(progressObj);
-            }
-            dataList.push(new ProductLine(productLineData.id, productLineData.name, productLineIndex, progressObjList));
-        }
-        this.productLineList = dataList; */
+        this.getAllForAddProgress();
     },
     methods: {
         // 获取工厂日历
@@ -87,6 +87,7 @@ export default {
                     // 保存到 vuex 中
                     that.$store.commit('setFactoryCalendarObj', factoryCalendar);
                     that.getProductLine();
+
                 }
             }).catch((error) => {
                 that.$Message.error({
@@ -106,30 +107,26 @@ export default {
                     that.$Message.error(response.data.msg);
                 } else {
                     var resourceData = response.data.data;
-                    console.log(resourceData);
                     var productlineList = [];
-                    for (var productLineIndex=0; productLineIndex<resourceData.lenght; productLineIndex++) {
+                    for (var productLineIndex=0; productLineIndex<resourceData.length; productLineIndex++) {
                         var productLineItem = new ProductLine(
-                            resourceData.id,
+                            resourceData[productLineIndex].id,
                             productLineIndex,
-                            resourceData.workgroup,
-                            resourceData.workshop,
-                            resourceData.lineCode,
-                            resourceData.workhours,
-                            resourceData.peopleNum
+                            resourceData[productLineIndex].workgroup,
+                            resourceData[productLineIndex].workshop,
+                            resourceData[productLineIndex].lineCode,
+                            resourceData[productLineIndex].workhours,
+                            resourceData[productLineIndex].peopleNum,
+                            resourceData[productLineIndex].peopleNumOfLineList,
+                            resourceData[productLineIndex].workhoursOfLineList,
+                            resourceData[productLineIndex].efficiencyOfLineList
                         );
                         var progressList = [];
-                        for (var progressIndex=0; progressIndex<resourceData.productionPlanningDetailList.lenght; progressIndex++) {
-                            var progressItemTemp = resourceData.productionPlanningDetailList[progressIndex];
+                        for (var progressIndex=0; progressIndex<resourceData[productLineIndex].productionPlanningDetailList.length; progressIndex++) {
+                            var progressItemTemp = resourceData[productLineIndex].productionPlanningDetailList[progressIndex];
                             var progressItem = new ProgressBar(
                                 productLineIndex,
-                                progressItemTemp.id,
-                                progressItemTemp.qtyFinish,
-                                progressItemTemp.style,
-                                progressItemTemp.sam,
-                                progressItemTemp.qtyOfBatchedDelivery,
-                                progressItemTemp.startTime,
-                                progressItemTemp.endTime,
+                                resourceData[productLineIndex].id,
                                 progressItemTemp
                             ); 
                             progressList.push(progressItem);
@@ -137,7 +134,27 @@ export default {
                         productLineItem.setProgressList(progressList);
                         productlineList.push(productLineItem);
                     }
-                    this.productLineList = productlineList;
+                    // 保存到 vuex 中
+                    that.$store.commit('setProductLineList', productlineList);
+                    that.isDone = true;
+                }
+            }).catch((error) => {
+                that.$Message.error({
+                  content: "服务器异常,请刷新！！",
+                  duration: 0,
+                  closable: true
+                });
+                console.log(error);
+            });
+        },
+        // 获取待排产的详情列表
+        getAllForAddProgress: function() {
+            var that = this;
+            this.axios.get(this.seieiURL + "productionplanningdetail/getAllForAddProgress").then((response) => {
+                if (response.data.status) {
+                    that.$Message.error(response.data.msg);
+                } else {
+                    that.$store.commit("setWaitingAddProgressList", response.data.data);
                 }
             }).catch((error) => {
                 that.$Message.error({
@@ -155,6 +172,8 @@ export default {
         'v-dateBar': dateBar,
         'v-backgroundCanvas': backgroundCanvas,
         'v-progressBarCanvas': progressBarCanvas,
+        'v-windowOfAddProgressBar': windowOfAddProgressBar,
+        "v-toast": toast,
     }
 }
 </script>

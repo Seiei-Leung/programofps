@@ -39,7 +39,6 @@ export default class FactoryCalendar {
             return null;
         }
         var dayList = this.dayList[index];
-        console.log(this.festivalDayList[index]);
         var dateTemp = this.festivalDayList[index].find((item) => {
             return item == DateUtil.timeStampToDate(timeStamp);
         })
@@ -52,4 +51,22 @@ export default class FactoryCalendar {
         return false;
     }
     
+    /**
+     * 给予开启时间，需要工作天数 来获取工作日期列表
+     * @param {*} startTime 开启日期
+     * @param {*} endTime 总需要工作天数
+     */
+    getEndTime(startTime, endTime) {
+        var dayCount = DateUtil.timeStampsToDayCount(startTime, endTime); // 需要多少工作日
+        var timeStampTemp = startTime;
+        var holidayCount = 0;
+        for (var i=0; i<dayCount; i++) {
+            if (this.isHoliday(timeStampTemp)) {
+               dayCount += 1;
+               holidayCount += 1;
+            }
+            timeStampTemp += DateUtil.timeStampOfOneDay;
+        }
+        return endTime + holidayCount*DateUtil.timeStampOfOneDay;
+    }
 }

@@ -1,12 +1,12 @@
 <template>
     <div class="dateBar-component">
         <!-- 日期标题 -->
-        <div class="months zIndexMiddle" ref="monthsHook" v-bind:style="styleOfMonthsClass">
+        <div class="months zIndexTop" ref="monthsHook" v-bind:style="styleOfMonthsClass">
             <div v-for="(yearandmonth, index) in monthListOfShow" v-bind:key="index" class="month">
                 <div class="monthTxt">
                     {{yearandmonth}}
                 </div>
-                <div class="singleItem" v-for="(day, index2) in getDays(yearandmonth)" v-bind:key="index2" v-bind:class="{weekend:isWeekEnd(yearandmonth, day)}">
+                <div class="singleItem" v-for="(day, index2) in getDays(yearandmonth)" v-bind:key="index2" v-bind:class="{weekend:isHoliday(yearandmonth, day)}">
                     {{day}}
                 </div>
             </div>
@@ -38,10 +38,10 @@ export default {
 			return DateUtil.getDayCountOfMonth(year, month);
 		},
 		// 是否周末
-		isWeekEnd: function(yearandmonth, day) {
+		isHoliday: function(yearandmonth, day) {
             var year = yearandmonth.split("-")[0];
 			var month = yearandmonth.split("-")[1];
-			return DateUtil.isWeekEnd(year, month, day);
+			return this.$store.state.factoryCalendarObj.isHoliday(DateUtil.strToTimeStamp(year + "-" + month + "-" + day));
 		}
 	},
 	created: function() {

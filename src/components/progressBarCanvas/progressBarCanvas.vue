@@ -1,5 +1,6 @@
 <template>
     <div class="progressBarCanvas-component" v-bind:style="{top: msgOfCanvas.top + 'px', left: msgOfCanvas.left + 'px'}">
+        <!-- 源画布 -->
         <canvas 
             class="sourceCanvas"
             ref="sourceCanvas"
@@ -8,6 +9,7 @@
             @mousedown="mousedownOfSourceCanvas($event)"
             @mousemove="mousemoveOfSourceCavnas($event)"
         ></canvas>
+        <!-- 移动画布 -->
         <canvas
             v-show="isShowCtxOfTmp"
             class="tempCanvas zIndexTop"
@@ -36,12 +38,13 @@ export default {
     ],
     data: function() {
         return {
+            factoryCalendar: null, // 工厂日历
             dayCountOfShow: DateUtil.dayCountOfShow, // 显示总天数
-            ctxOfSource: null,
-            ctxOfTemp: null,
-            V2M: null, // v2m 对象
-            isShowCtxOfTmp: false,
-            activedProgressBar: null, 
+            ctxOfSource: null, // 源画布的上下文
+            ctxOfTemp: null, // 移动画布的上下文
+            beforeProductLineIndex: null, // 激活进度条的原来生产线的索引
+            afterProductLineIndex: null, // 激活进度条移动后的生产线索引
+            
         }
     },
     computed: {
@@ -53,6 +56,10 @@ export default {
                 top: CONST.STYLEOFPRODUCTLINESBAR.height + CONST.STYLEOFTOOLBAR.height - CONST.STYLEOFPRODUCTLINESBAR.lineWidth - CONST.STYLEOFTOOLBAR.lineWidth,
                 left: CONST.STYLEOFPRODUCTLINESBAR.width - CONST.STYLEOFPRODUCTLINESBAR.lineWidth
             }
+        },
+        // 是否显示移动画布
+        isShowCtxOfTmp: function() {
+            return this.$store.state.isShowCtxOfTmp;
         }
     },
     mounted: function() {
@@ -66,13 +73,13 @@ export default {
         this.$store.commit('setCtxOfTemp', ctxOfTemp);
         this.ctxOfTemp = ctxOfTemp;
         this.productLineList.forEach((item) => {
-            item.progressBarList.forEach((progressBar) => {
+            item.getProgressList.forEach((progressBar) => {
                 progressBar.render(this.ctxOfSource);
             });
         });
     },
     created: function() {
-        this.V2M = new V2M(this.productLineList);
+        this.factoryCalendar = this.$store.state.factoryCalendarObj;
     },
     methods: {
         /*
@@ -81,16 +88,22 @@ export default {
         // 在源数据画布中点击
         mousedownOfSourceCanvas: function(e) {
             var that = this;
+            // 获取当前激活的进度条
             var progressBar =this.getProgressBarByXY(e);
             if (progressBar == null) {
                 return;
             }
-            this.isShowCtxOfTmp = true;
+            
+            this.beforeProductLineIndex = progressBar.getProductLineIndex;
+            this.$store.commit("toggleIsShowCtxOfTmp");
+
             // 清除源画布
-            progressBar.clear(this.ctxOfSource);
+            this.productLineList[progressBar.getProductLineIndex].clear(this.ctxOfSource);
+            this.productLineList[progressBar.getProductLineIndex].renderWithOutIdList(this.ctxOfSource, [progressBar.getId]);
+
             // 渲染移动画布
             progressBar.render(this.ctxOfTemp);
-            this.activedProgressBar = progressBar;
+            this.$store.commit("setActivedProgressBar", progressBar);
         },
         // 在源数据画布移动
         mousemoveOfSourceCavnas: function(e) {
@@ -104,52 +117,156 @@ export default {
         /*
             临时画布绑定事件
         */
-        // 移动
+        // 鼠标拖动
         mousemoveOfTempCanvas: function(e) {
-            var activedProgressBar = this.activedProgressBar;
+            var activedProgressBar = this.$store.state.activedProgressBar;
+            var totalWidth = this.msgOfCanvas.width + CONST.STYLEOFPRODUCTLINESBAR.width; // 整个排产器的总宽度
+            var totalHeight = this.msgOfCanvas.height + this.msgOfCanvas.top; // 整个排产器的总高度
+            var widthOfWindow = document.body.clientWidth; // 浏览器窗口的宽度
+            var heightOfWindow = document.body.clientHeight; // 浏览器窗口的长度
+            
+            /**
+             * 拖动时的自行滚动
+             */
+            // 左右移动
+            // 拖动时，鼠标的位置在最右侧的四个单元格之类
+            if (widthOfWindow - e.clientX < (4*CONST.STYLEOFCELL.width)) {
+                // 滚动条离最右的差值
+                var differenceX = totalWidth - (window.pageXOffset + widthOfWindow);
+                // 且滚动条还能向右滚动 50 px
+                if (differenceX > 50) {
+                    window.scroll(window.pageXOffset + 50, window.pageYOffset);
+                }
+                // 已经不能在向右移动 50 px，但还有多余数值，所以默认移动到最右
+                else if (0<differenceX && differenceX <= 50) {
+                    window.scroll(totalWidth - widthOfWindow, window.pageYOffset);
+                }
+            } 
+            // 拖动时，鼠标的位置在最左的两个单元格之类
+            else if (e.clientX < (2*CONST.STYLEOFCELL.width + CONST.STYLEOFPRODUCTLINESBAR.width)) {
+                // 滚动条还能向左滚动 50 px
+                if (window.pageXOffset > 50) {
+                    window.scroll(window.pageXOffset - 50, window.pageYOffset);
+                }
+                // 已经不能在向左移动 50 px，但还有多余数值，所以默认移动到最左
+                else if (0<window.pageXOffset && window.pageXOffset <= 50) {
+                    window.scroll(0, window.pageYOffset);
+                }
+            }
+            // 上下移动
+            // 拖动时，鼠标的位置在最底侧的四个单元格之类
+            if (heightOfWindow - e.clientY < (4*CONST.STYLEOFCELL.height)) {
+                // 滚动条离最底侧的差值
+                var differenceY = totalHeight - (window.pageYOffset + heightOfWindow);
+                // 且滚动条还能向下滚动 50 px
+                if (differenceY > 50) {
+                    window.scroll(window.pageXOffset, window.pageYOffset + 50);
+                }
+                // 已经不能在向下移动 50 px，但还有多余数值，所以默认移动到最低
+                else if (0<differenceY && differenceY <= 50) {
+                    window.scroll(window.pageXOffset, totalHeight - heightOfWindow);
+                }
+            }
+            // 拖动时，鼠标的位置在最上的两个单元格之类
+            else if (e.clientY < (2*CONST.STYLEOFCELL.height + this.msgOfCanvas.top)) {
+
+                // 滚动条还能向上移动 50 px
+                if (window.pageYOffset > 50) {
+                    window.scroll(window.pageXOffset, window.pageYOffset - 50);
+                }
+                // 已经不能在向上移动 50 px，但还有多余数值，所以默认移动到最上
+                else if (0<window.pageYOffset && window.pageYOffset <= 50) {
+                    window.scroll(window.pageXOffset, 0);
+                }
+            }
+
+            // 移动渲染图层
             var x = e.clientX - this.msgOfCanvas.left + window.pageXOffset;
             var y = e.clientY - this.msgOfCanvas.top + window.pageYOffset;
             activedProgressBar.move(this.ctxOfTemp, x, y);
         },
         // 松开鼠标键
         mouseupOfTempCanvas: function(e) {
-            var activedProgressBar = this.activedProgressBar;
+            var that = this;
+            var activedProgressBar = this.$store.state.activedProgressBar;
+            var productLineList = this.productLineList;
+
             // 记录鼠标坐标
             var x = e.clientX - this.msgOfCanvas.left + window.pageXOffset;
             var y = e.clientY - this.msgOfCanvas.top + window.pageYOffset;
+            this.afterProductLineIndex = V2M.yToProductLineIndex(productLineList, y); // 移动后所在生产线的索引
+            var activedProductLine = productLineList[this.afterProductLineIndex]; // 移动后所在的生产线
+            var beforeProductLine = null; // 移动前所在的生产线
+            // 如果不是新增的进度条
+            if (activedProgressBar.getProductLineIndex != null) {
+                beforeProductLine = productLineList[this.beforeProductLineIndex];
+            }
+
+            var startTimeStamp = V2M.xToTimeStamp(x); // 开启时间戳
+            console.log("鼠标松开按键时的所在生产生产线：" + activedProductLine.fullName);
+            // console.log("鼠标松开按键后的激活进度条开启时间：" + DateUtil.timeStampToDate(V2M.xToTimeStamp(x)));
+
             // 清空临时画布，及隐藏它
             this.ctxOfTemp.clearRect(0, 0, this.ctxOfTemp.canvas.offsetWidth, this.ctxOfTemp.canvas.offsetHeight);
-            this.isShowCtxOfTmp = false;
-            // todo 
-            // 1、确定生产线 2、确定宽度 
-            // 数据影响图层
+            this.$store.commit("toggleIsShowCtxOfTmp");
             
+            // 生产线没有对应的效率
+            if (activedProductLine.getEfficiency(activedProgressBar.getProductStyleName) == null) {
+                this.showToast("生产线没有相对弈的效率", null);
 
+                // 还原进度条
+                if (beforeProductLine) {
+                    beforeProductLine.clear(this.ctxOfSource);
+                    beforeProductLine.renderWithOutIdList(this.ctxOfSource, null);
+                }
+                return;
+            }
 
+            // TODO 记录重做
 
+            // 源生产线删除移动进度条的数据，如果
+            if (beforeProductLine) {
+                beforeProductLine.removeProgressById(activedProgressBar.getId);
+            }
 
+            // 设置数据
 
+            // 松开鼠标后，激活进度条的初步更新数据，初步渲染
+            activedProgressBar.reload(activedProductLine, this.factoryCalendar, startTimeStamp);
+            console.log(DateUtil.timeStampToDate(activedProgressBar.getStartTime))
+            console.log(DateUtil.timeStampToDate(activedProgressBar.getEndTime))
 
-
-
-
-
-
+            // 移动后，激活进度条移出了原来的生产线
+            if (this.beforeProductLineIndex != this.afterProductLineIndex) {
+                console.log("进度条移出了原来的生产线");
+            }
+            else {
+            // 移动后，激活进度条没有移出原来的生产线
+                console.log("进度条没有移出原来的生产线");
+            }
+            // 生产线重新数据，并渲染图层
+            activedProductLine.clear(this.ctxOfSource); // 清空图层
+            activedProductLine.addProgress(activedProgressBar, this.factoryCalendar); // 激活生产线添加进度条
+            activedProductLine.renderWithOutIdList(this.ctxOfSource, null); // 渲染
+            console.log(activedProductLine.getProgressList);
         },
         // 在数据画布悬浮，获取对应的激活的进度条
         getProgressBarByXY: function(e) {
             var x = e.clientX - this.msgOfCanvas.left + window.pageXOffset;
             var y = e.clientY - this.msgOfCanvas.top + window.pageYOffset;
-            var productLineIndex = this.V2M.yToProductLineIndex(y) - 1;
-            var progressBarList = this.productLineList[productLineIndex].progressBarList;
+            // 获取当前激活生产线
+            var productLineIndex = V2M.yToProductLineIndex(this.productLineList, y);
+            var progressBarList = this.productLineList[productLineIndex].getProgressList;
+            // 循环当前激活的生产线的进度条，检测是否在点击范围内
             for (var progressIndex=0; progressIndex<progressBarList.length; progressIndex++) {
                 if (progressBarList[progressIndex].isInArea(x, y)) {
                     return progressBarList[progressIndex];
                 }
             }
+            // 循环完都没有，返回 null
             return null;
         }
-    },
+    }
 }
 </script>
 

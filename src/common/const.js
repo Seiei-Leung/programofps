@@ -23,14 +23,6 @@ export default class Const {
         }
     }
 
-    // 画布样式
-    static STYLEOFCANVAS(numOfProductLine) {
-        return {
-            width: DateUtil.dayCountOfShow * this.STYLEOFCELL.width,
-            height: numOfProductLine * this.STYLEOFCELL.height
-        }
-    }
-
     // 静态 getter
     // 底层画布单元格子样式
     static get STYLEOFCELL() {
@@ -50,10 +42,7 @@ export default class Const {
             height: 30,
             lineWidth: 1,
             fontStyle: "14px Arial",
-
-
-
-
+            paddingLeft: 4
         }
     }
 

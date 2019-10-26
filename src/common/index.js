@@ -1,7 +1,6 @@
 import ScrollUtil from "./scrollUtil";
 
 // 注册自定义插件
-
 export default{
 	install: function(Vue, opt) {
 		// 定义 goBack 实例方法，返回上一页
@@ -9,21 +8,25 @@ export default{
 			data: function() {
 				return {
 					seieiURL: "http://localhost:8080/api/",
-					scrollX: null,
-					scrollY: null,
-					scrollDirection: null,
+					scrollDirection: null, // 滚动方向
 				}
 			},
 			methods: {
-				goBack: function() {
-					this.$router.go(-1);
-				},
+				// 显示提示
+				showToast: function(toastTxt, time) {
+					var that = this;
+					if (time == null) {
+						time = 2000;
+					}
+					this.$store.commit("showToast", toastTxt);
+					setTimeout(() => {
+						that.$store.commit("hideToast");
+					}, time);
+				}
 			},
 			created: function () {
 				var that = this;
-/*       			if (this.$store.state.userMsg.length == 0) {
-                      
-				  } */
+				// todo 检测用户登录信息
 				
 				// 检查滚动
 				this.$nextTick(() => {
@@ -37,10 +40,7 @@ export default{
 						}
 					}
 				});
-				
-
-
-    		}
+			}
 		})
 	}
 }

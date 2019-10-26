@@ -1,28 +1,38 @@
 import DateUtil from "./dateUtil";
 import CONST from "./const";
 
+// 数据模型映射视图
 export default class M2V {
 
-    /*
-        参数：生产线列表
-    */
     constructor() {
     }
 
-    // 开始时间戳转为 x 坐标
-    static btimeToX(timeStamp) {
+    /**
+     * 时间戳转化为 x 坐标
+     * @param {*} timeStamp 时间戳 
+     */
+    static timeStampToX(timeStamp) {
         var firstTimeStamp = DateUtil.firstTimeStampOfShow;
         var timeStampTmpl = timeStamp - firstTimeStamp;
         var dayCount =  Math.floor(timeStampTmpl / DateUtil.timeStampOfOneDay);
-        return (dayCount*(CONST.STYLEOFCELL.width + 2*CONST.STYLEOFCELL.lineWidth) + ((CONST.STYLEOFCELL.width + 2*CONST.STYLEOFCELL.lineWidth) / 2)) + CONST.STYLEOFPROGRESSBAR.lineWidth;
+        var residueTimeStamp = timeStampTmpl - dayCount*DateUtil.timeStampOfOneDay; // 剩余的时间戳
+        var percent = Number((residueTimeStamp / DateUtil.timeStampOfOneDay).toFixed(1)); // 剩余的时间戳占一天的百分比
+        return Math.floor(dayCount*(CONST.STYLEOFCELL.width + 2*CONST.STYLEOFCELL.lineWidth) + percent*CONST.STYLEOFCELL.width);
     }
 
-    // 需要天数转为 宽度
-    static dayCountToWidth(dayCount) {
-        return (dayCount*CONST.STYLEOFCELL.width + (dayCount - 1)*2*CONST.STYLEOFCELL.lineWidth + CONST.STYLEOFPROGRESSBAR.lineWidth);
+    /**
+     * 两个时间戳之间的差值转为 宽度
+     * @param {*} startTime 开始时间戳
+     * @param {*} endTime 结束时间戳
+     */
+    static differenceTimeStampToWidth(startTime, endTime) {
+        return M2V.timeStampToX(endTime) - M2V.timeStampToX(startTime);
     }
-
-    // 生产线索引转为 y 坐标
+    
+    /**
+     * 排产进度条通过生产线索引转为 y 坐标
+     * @param {*} productLineIndex 生产线索引
+     */
     static productLineIndexToY(productLineIndex) {
         var top = productLineIndex * (CONST.STYLEOFCELL.height + 2*CONST.STYLEOFCELL.lineWidth);
         return (top + CONST.STYLEOFPROGRESSBAR.top);
