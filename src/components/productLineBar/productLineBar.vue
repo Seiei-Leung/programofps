@@ -18,7 +18,6 @@
 import CONST from "../../common/const";
 
 export default {
-    props: ['productLineList'],
     data: function() {
         return {
             
@@ -44,6 +43,9 @@ export default {
             return {
                 marginTop: CONST.STYLEOFPRODUCTLINESBAR.height + "px"
             }
+        },
+        productLineList: function() {
+            return this.$store.state.productLineList;
         }
     },
     watch: {
@@ -52,22 +54,6 @@ export default {
         }
     },
     created: function() {
-        var that = this;
-/*         this.$nextTick(() => {
-            var productLineBarDom = that.$refs.productLinesBarHook;
-            window.onscroll = function(e) {
-                var scrollDirection = that.getDetailOfScroll();
-                if (scrollDirection == 'DOWN' || scrollDirection == 'UP') {
-                    productLineBarDom.style.position = "absolute";
-                    productLineBarDom.style.top = CONST.STYLEOFTOOLBAR.height + "px";
-                    productLineBarDom.style.left = window.pageXOffset + "px";
-                } else if (scrollDirection == "Left" || scrollDirection == "RIGHT") {
-                    productLineBarDom.style.position = "fixed";
-                    productLineBarDom.style.left = "0px";
-                    productLineBarDom.style.top = CONST.STYLEOFTOOLBAR.height - window.pageYOffset + "px";
-                }
-            }
-        }) */
     },
     methods: {
     }

@@ -1,9 +1,8 @@
-import ScrollUtil from "./scrollUtil";
-
 // 注册自定义插件
 export default{
 	install: function(Vue, opt) {
-		// 定义 goBack 实例方法，返回上一页
+		// seieiURL: "http://www.etscn.com.cn:58080/SaasapsBackEnd/api/",
+		// seieiURL: "http://localhost:8080/api/",
 		Vue.mixin({
 			data: function() {
 				return {
@@ -22,24 +21,17 @@ export default{
 					setTimeout(() => {
 						that.$store.commit("hideToast");
 					}, time);
+				},
+				// 用户 session 失效
+				isInvaildSession: function(status) {
+					if (status == 10) {
+						var href = window.location.href;
+						href = href.split("/ps")[0] + "/#/signIn";
+						window.location.assign(href);
+					}
 				}
 			},
 			created: function () {
-				var that = this;
-				// todo 检测用户登录信息
-				
-				// 检查滚动
-				this.$nextTick(() => {
-					var scrollUtil = new ScrollUtil();
-					window.onscroll = function() {
-						scrollUtil.scroll();
-						if (scrollUtil.scrollDirection == 'down' || scrollUtil.scrollDirection == 'up') {
-							that.$store.commit('scrollUpOrDown');
-						} else if (scrollUtil.scrollDirection == 'right' || scrollUtil.scrollDirection == 'left') {
-							that.$store.commit('scrollRightOrLeft');
-						}
-					}
-				});
 			}
 		})
 	}

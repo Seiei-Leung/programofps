@@ -1,6 +1,9 @@
 import Vue from 'vue';
 import Vuex from 'vuex';
 import CONST from "../common/const";
+import MapListUtil from "../common/mapListUtil";
+import MapUtil from '../common/mapListUtil';
+import { stat } from 'fs';
 
 Vue.use(Vuex);
 
@@ -33,8 +36,36 @@ export default new Vuex.Store({
 		waitingAddProgressList: [], // 等待被添加的排产详情列表
 		activedProgressBar: null, // 拖动激活的进度条
 		isShowCtxOfTmp: false, // 是否显示移动画布
+		historyObjList: [], // 历史记录列表
+		activedIndexOfHistoryObjList: null, // 历史记录列表的索引
+		activedObjListOfProductLine: [], // 激活过的生产线索引与所在生产线最早更新的排产计划索引组成的键值对
+		isLoading: false, // 是否显示 loading 图层
+		msgOfWindowOfMenu:{
+			top: "0px",
+			left: "0px"
+		}, // 右键菜单的位置 CSS 样式
+		isShowWindowOfMenu: false, // 是否显示右键菜单窗口
+		isShowWindowOfMinus: false, // 是否显示减数窗口
 	},
 	mutations: {
+		// 显示人数
+		toggleNumberofwork(state) {
+			if (state.isShowNumberofwork) {
+				state.isShowNumberofwork = false;
+			} else {
+				state.isShowNumberofwork = true;
+				state.isShowWorkingHours = false;
+			}
+		},
+		// 显示工时
+		toggleWorkingHours(state) {
+			if (state.isShowWorkingHours) {
+				state.isShowWorkingHours = false;
+			} else {
+				state.isShowWorkingHours = true;
+				state.isShowNumberofwork = false;
+			}
+		},
 		// 设置画布
         setCtxOfSource(state, ctx) {
 			state.ctxOfSource = ctx;
@@ -57,7 +88,7 @@ export default new Vuex.Store({
 				styleOfMonthsClass: {
 					position: "fixed",
 					top: CONST.STYLEOFTOOLBAR.height - CONST.STYLEOFTOOLBAR.lineWidth + "px",
-					left: - window.pageXOffset + "px"
+					left: - window.pageXOffset + CONST.STYLEOFPRODUCTLINESBAR.width + "px"
 				}
 			}
 		},
@@ -74,7 +105,7 @@ export default new Vuex.Store({
 				// 日期 bar
 				styleOfMonthsClass: {
 					position: "absolute",
-					top: CONST.STYLEOFTOOLBAR.height - CONST.STYLEOFTOOLBAR.lineWidth + "px",
+					top: window.pageYOffset + CONST.STYLEOFTOOLBAR.height - CONST.STYLEOFTOOLBAR.lineWidth + "px",
 					left: CONST.STYLEOFPRODUCTLINESBAR.width - CONST.STYLEOFPRODUCTLINESBAR.lineWidth + "px"
 				}
 			}
@@ -88,7 +119,7 @@ export default new Vuex.Store({
 			state.productLineList = productLineList;
 		},
 		// 显示 toast 
-		showToast(state, toastTxt, time) {
+		showToast(state, toastTxt) {
 			state.toastTxt = toastTxt;
 			state.isShowToast = true;
 		},
@@ -97,11 +128,22 @@ export default new Vuex.Store({
 			state.isShowToast = false;
 		},
 		// 切换显示添加进度条窗口
-		toggleIsShowWindowOfAddProgress(state) {
-			state.isShowWindowOfAddProgress = !state.isShowWindowOfAddProgress;
+		setIsShowWindowOfAddProgress(state, data) {
+			state.isShowWindowOfAddProgress = data;
 		},
 		// 设置 waitingAddProgressList
 		setWaitingAddProgressList(state, waitingAddProgressList) {
+			state.waitingAddProgressList = waitingAddProgressList;
+		},
+		// 根据 id 删除 waitingAddProgressList 的某项
+		removeWaitingAddProgressList(state, id) {
+			var waitingAddProgressList = [...state.waitingAddProgressList]; // 赋值数组
+			// console.log(id);
+			// console.log(waitingAddProgressList);
+			var index = waitingAddProgressList.findIndex((item) => {
+				return item.id == id;
+			})
+			waitingAddProgressList.splice(index, 1);
 			state.waitingAddProgressList = waitingAddProgressList;
 		},
 		// 设置拖动激活 activedProgressBar
@@ -111,6 +153,86 @@ export default new Vuex.Store({
 		// 切换移动画布
 		toggleIsShowCtxOfTmp(state) {
 			state.isShowCtxOfTmp = !state.isShowCtxOfTmp;
+		},
+		// 设置历史记录列表
+		setHistoryObjList(state, historyObjList) {
+			state.historyObjList = historyObjList;
+		},
+		// 插入历史记录
+		pushHistoryObjList(state, productLineList) {
+			var historyObjList = [...state.historyObjList];
+			if (state.activedIndexOfHistoryObjList == null) {
+				historyObjList.push(productLineList);
+				state.historyObjList = historyObjList;
+			} else {
+				var historyObjListTemp = [];
+				for (var i=0; i<=state.activedIndexOfHistoryObjList; i++) {
+					historyObjListTemp.push(historyObjList[i]);
+				}
+				historyObjListTemp.push(productLineList);
+				state.activedIndexOfHistoryObjList += 1;
+				state.historyObjList = historyObjListTemp;
+			}
+		},
+		// 设置激活过的生产线索引对象列表
+		setActivedObjListOfProductLine(state, activedObjListOfProductLine) {
+			state.activedObjListOfProductLine = activedObjListOfProductLine;
+		},
+		// 新增激活过的生产线索引对象
+		addActivedObjListOfProductLine(state, data) {
+			var activedObjListOfProductLine = state.activedObjListOfProductLine;
+			var obj = MapUtil.getObjFromMapListByKey(activedObjListOfProductLine, data.productLineIndex);
+			/**
+			 * 配置对象
+			 */
+			// 列表中没有该信息
+			if (obj == null) {
+				var obj = {};
+				obj[data.productLineIndex] = data.progressBarIndex;
+			} else {
+				if (data.progressBarIndex == null && obj[data.productLineIndex] == null) {
+					obj[data.productLineIndex] = null;
+				}
+				else if (data.progressBarIndex == null && obj[data.productLineIndex] != null) {
+
+				}
+				else if (data.progressBarIndex != null && obj[data.productLineIndex] == null) {
+					obj[data.productLineIndex] = data.progressBarIndex;
+				}
+				else if (data.progressBarIndex != null && obj[data.productLineIndex] != null) {
+					if (data.progressBarIndex < obj[data.productLineIndex]) {
+						obj[data.productLineIndex] = data.progressBarIndex;
+					}
+				}
+			}
+			var resultList = MapListUtil.addNewAndRemoveOld(activedObjListOfProductLine, obj);
+			state.activedObjListOfProductLine = resultList;
+		},
+		// 设置历史记录列表的索引
+		setActivedIndexOfHistoryObjList(state, index) {
+			state.activedIndexOfHistoryObjList = index;
+		},
+		// 切换 isLoading
+		setIsLoading(state, data) {
+			state.isLoading = data;
+		},
+		// 设置右键菜单位置的 CSS 样式
+		setMsgOfWindowOfMenu(state, data) {
+			state.msgOfWindowOfMenu = data;
+		},
+		// 切换显示左键拆单
+		setIsShowWindowOfMenu(state, data) {
+			state.isShowWindowOfMenu = data;
+		},
+		// 切换显示减数窗口
+		setIsShowWindowOfMinus(state, data) {
+			state.isShowWindowOfMinus = data;
+		},
+		// 全部窗口关闭
+		closeAllWindow(state) {
+			state.isShowWindowOfAddProgress = false;
+			state.isShowWindowOfMenu = false;
+			state.isShowWindowOfMinus = false;
 		}
 	}
 })

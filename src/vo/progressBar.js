@@ -7,9 +7,9 @@ import Const from "../common/const";
 // 进度条类
 export default class ProgressBar {
 
-    constructor(productLineIndex, productionlineId, msgOfProgressBar) {
+    constructor(productLineIndex, productionLineId, msgOfProgressBar) {
         this.productLineIndex = productLineIndex; // 所在生产线索引
-        this.productionlineId = productionlineId; // 所在生产线生产线ID
+        this.productionLineId = productionLineId; // 所在生产线生产线ID
         this.id = msgOfProgressBar.id; // 进度条 ID
         this.qtyFinish = msgOfProgressBar.qtyFinish; // 完成数量
         this.sam = msgOfProgressBar.sam; // sam
@@ -19,13 +19,26 @@ export default class ProgressBar {
         this.startTime = msgOfProgressBar.startTime; // 开始时间
         this.endTime = msgOfProgressBar.endTime; // 结束时间
         this.msgOfProgressBar = msgOfProgressBar; // 排产进度条详情
-
-        this.needWorkDayCount = null; // 在当前生产线内需要多少个工作日完成
     }
 
     // 获取 进度条 Id
     get getId() {
         return this.id;
+    }
+
+    // 获取 完成数量
+    get getQtyFinish() {
+        return this.qtyFinish;
+    }
+
+    // 获取 计划数量
+    get getQtyofbatcheddelivery() {
+        return this.qtyofbatcheddelivery;
+    }
+
+    // 获取所在生产线的 id
+    get geProductLineId() {
+        return this.productionLineId;
     }
 
     // 获取产品类名
@@ -69,6 +82,24 @@ export default class ProgressBar {
     }
 
     /**
+     * 获取离货期天数
+     */
+    get dayNumOfRemain() {
+        // console.log(this.msgOfProgressBar.deliveryoffactoryTime + "-" + this.endTime + "-" + this.msgOfProgressBar.backpartDaynum + "*" + DateUtil.timeStampOfOneDay);
+        var backpartDaynum = this.msgOfProgressBar.backpartDaynum ? this.msgOfProgressBar.backpartDaynum : 0; // 后整天数
+        var timeStamp = this.msgOfProgressBar.deliveryoffactoryTime - this.endTime - backpartDaynum*DateUtil.timeStampOfOneDay;
+        var isMinus = timeStamp < 0 ? true : false;
+        if (isMinus) {
+            timeStamp = Math.abs(timeStamp);
+        }
+        var dayCount = Math.ceil(timeStamp/DateUtil.timeStampOfOneDay);
+        if (isMinus) {
+            dayCount = Number(-dayCount);
+        }
+        return dayCount;
+    }
+
+    /**
      * 重置进度条的生产线、工厂日历属性、开始时间，从而更新数据
      * @param {*} productLine 生产线实例
      * @param {*} factoryCalendar 工厂日历实例
@@ -77,7 +108,7 @@ export default class ProgressBar {
     reload(productLine, factoryCalendar, startTime) {
         this.startTime = startTime;
         this.setEndTime(productLine, factoryCalendar, startTime);
-        this.productionlineId = productLine.getId;
+        this.productionLineId = productLine.getId;
         this.productLineIndex = productLine.getIndex;
     }
 
@@ -103,6 +134,36 @@ export default class ProgressBar {
         this.endTime = endTime;
     }
 
+     /**
+      * 减数功能
+      * @param {*} productLine 生产线
+      * @param {*} factoryCalendar 工作日历
+      * @param {*} qtyFinish 完成数
+      * @param {*} timeStampOfNow 设置时间的 0时0点0秒 的时间戳（当天）
+      */
+     minus(productLine, factoryCalendar, qtyFinish, timeStampOfNow) {
+        var qtyOfUnFinish = this.qtyofbatcheddelivery - qtyFinish;
+        this.qtyFinish = qtyFinish;
+        // 排产已完成
+        if (qtyOfUnFinish == 0) {
+            // 当天时间比 排产设置开始时间 早
+            if (timeStampOfNow < this.startTime) {
+                this.endTime = this.startTime;
+            } else {
+                this.endTime = timeStampOfNow;
+            }
+        }
+        // 排产还没有完成
+        else {
+            // 设置时间比排产开始时间要早
+            if (timeStampOfNow <= this.startTime) {
+                this.setEndTime(productLine, factoryCalendar, this.startTime);
+            } else {
+                this.setEndTime(productLine, factoryCalendar, timeStampOfNow);
+            }
+        }
+    }
+
     /**
      * 给予 x,y 坐标，检测是否在该进度条范围内
      * @param {*} x x 坐标
@@ -120,10 +181,29 @@ export default class ProgressBar {
     }
 
     /**
+     * 复制 进度计划
+     */
+    copy() {
+        var that = this;
+        var msgOfProgressBar = {...this.msgOfProgressBar};
+        msgOfProgressBar.qtyFinish = this.qtyFinish; // 完成数量
+        msgOfProgressBar.qtyofbatcheddelivery = this.qtyofbatcheddelivery; // 计划数量
+        msgOfProgressBar.startTime = this.startTime; // 开始时间
+        msgOfProgressBar.endTime = this.endTime; // 结束时间
+        var progressBar = new ProgressBar(
+            that.productLineIndex,
+            that.productionLineId,
+            msgOfProgressBar
+        );
+        return progressBar;
+    }
+
+    /**
      * 在画布中渲染进度条
      * @param {*} ctx 画布的上下文
+     * @param {*} isHeigher 是否需要上移
      */
-    render(ctx) {
+    render(ctx, isHeigher) {
         ctx.save();
         var msgOfCSS = this.msgOfCSS;
         ctx.lineWidth = CONST.STYLEOFPROGRESSBAR.lineWidth; //设置线的宽度
@@ -132,8 +212,15 @@ export default class ProgressBar {
         if (msgOfCSS.width < 1) {
             width = 1;
         }
-        // 移动画布
-        ctx.translate(msgOfCSS.left + 0.5, msgOfCSS.top + 0.5);
+        /**
+         * 移动画布
+         */
+        // 如果没有重叠
+        if (!isHeigher) {
+            ctx.translate(msgOfCSS.left + 0.5, msgOfCSS.top + 0.5);
+        } else {
+            ctx.translate(msgOfCSS.left + 0.5, msgOfCSS.top + 0.5 - CONST.STYLEOFPROGRESSBAR.top);
+        }
         // 渲染进度框
         ctx.beginPath();
         ctx.moveTo(0, 0);
@@ -158,9 +245,14 @@ export default class ProgressBar {
         // 渲染制单号文本
         ctx.fillStyle = "#444";
         ctx.fillText(this.msgOfProgressBar.orderno, CONST.STYLEOFPROGRESSBAR.paddingLeft, CONST.STYLEOFPROGRESSBAR.lineWidth, (width - 2*CONST.STYLEOFPROGRESSBAR.paddingLeft));
+        // 渲染离货期天数
+        ctx.fillStyle = "rgba(237, 64, 20, 0.8)";
+        var text = ctx.measureText(this.dayNumOfRemain); // 获取文本渲染对象
+        var textWidth = text.width; // 获取文本的渲染长度
+        if (width > textWidth + CONST.STYLEOFPROGRESSBAR.paddingLeft) {
+            ctx.fillText(this.dayNumOfRemain, width - textWidth - CONST.STYLEOFPROGRESSBAR.paddingLeft, CONST.STYLEOFPROGRESSBAR.height/2+Const.STYLEOFPROGRESSBAR.lineWidth);
+        }
         ctx.restore();
-        /* ctx.strokeRect(msgOfCSS.left + 0.5, msgOfCSS.top + 0.5, width, CONST.STYLEOFPROGRESSBAR.height); */
-        /* console.log(msgOfCSS.top + "," + msgOfCSS.left + "," + width + "," + CONST.STYLEOFPROGRESSBAR.height); */
     }
 
     /**
@@ -218,6 +310,7 @@ export default class ProgressBar {
         // 渲染制单号文本
         ctx.fillStyle = "#444";
         ctx.fillText(this.msgOfProgressBar.orderno, CONST.STYLEOFPROGRESSBAR.paddingLeft, CONST.STYLEOFPROGRESSBAR.lineWidth, (msgOfCSS.width - 2*CONST.STYLEOFPROGRESSBAR.paddingLeft));
+        // 渲染剩余天数
         ctx.restore();
     }
 

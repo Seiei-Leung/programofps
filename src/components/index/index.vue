@@ -5,7 +5,6 @@
         <!-- 左侧生产线栏 -->
         <v-productLinBar
             v-if="isDone"
-            v-bind:productLineList="productLineList"
             ref="productLinesBarHook">
         </v-productLinBar>
         <!-- 日期栏 -->
@@ -14,18 +13,22 @@
         ></v-dateBar>
         <!-- 背景画布 -->
         <v-backgroundCanvas
-            v-if="isDone"
-            v-bind:countOfProductLines="productLineList.length">
+            v-if="isDone">
         </v-backgroundCanvas>
         <!-- 装载进度条画布 -->
         <v-progressBarCanvas
             v-if="isDone"
-            v-bind:productLineList="productLineList"
         ></v-progressBarCanvas>
         <!-- 右侧添加进度条窗口 -->
         <v-windowOfAddProgressBar></v-windowOfAddProgressBar>
         <!-- 提示组件 -->
         <v-toast v-show="isShowToast" v-bind:txt="toastTxt"></v-toast>
+        <!-- 鼠标右击进度条显示菜单 -->
+        <v-windowOfMenu v-show="isShowWindowOfMenu"></v-windowOfMenu>
+        <!-- 减数窗口 -->
+        <v-windowOfMinus v-if="isShowWindowOfMinus"></v-windowOfMinus>
+        <!-- loading 组件 -->
+        <v-loading v-show="isLoading"></v-loading>
     </div>
 </template>
 
@@ -42,6 +45,10 @@ import DateUtil from "../../common/dateUtil";
 import FactoryCalendar from "../../vo/factoryCalendar";
 import windowOfAddProgressBar from "../windowOfAddProgressBar/windowOfAddProgressBar";
 import toast from "../toast/toast";
+import loading from "../loading/loading";
+import windowOfMenu from "../windowOfMenu/windowOfMenu";
+import windowOfMinus from "../windowOfMinus/windowOfMinus";
+import ScrollUtil from "../../common/scrollUtil";
 
 export default {
     data: function() {
@@ -61,20 +68,48 @@ export default {
         // toast 文本
         toastTxt: function() {
             return this.$store.state.toastTxt;
+        },
+        // 是否显示加载中
+        isLoading: function() {
+            return this.$store.state.isLoading;
+        },
+        // 是否显示右键菜单窗口
+        isShowWindowOfMenu: function() {
+            return this.$store.state.isShowWindowOfMenu;
+        },
+        isShowWindowOfMinus: function() {
+            return this.$store.state.isShowWindowOfMinus;
         }
     },
     created: function() {
         this.getFactoryCalendar();
         this.getAllForAddProgress();
+		var that = this;
+		
+		// 检查滚动
+		this.$nextTick(() => {
+			var scrollUtil = new ScrollUtil();
+			window.onscroll = function() {
+				scrollUtil.scroll();
+				if (scrollUtil.scrollDirection == 'down' || scrollUtil.scrollDirection == 'up') {
+					that.$store.commit('scrollUpOrDown');
+				} else if (scrollUtil.scrollDirection == 'right' || scrollUtil.scrollDirection == 'left') {
+					that.$store.commit('scrollRightOrLeft');
+				}
+			}
+		});
     },
     methods: {
         // 获取工厂日历
         getFactoryCalendar: function() {
             var that = this;
+            this.$store.commit("setIsLoading", true);
             var yearListOfShow = DateUtil.yearListOfShow;
             this.axios.get(this.seieiURL + "factoryCalendar/getFactoryCalendarByYear?yearList=" + yearListOfShow.join(",")).then((response) => {
                 if (response.data.status) {
+                    that.$store.commit("setIsLoading", false);
                     that.$Message.error(response.data.msg);
+                    that.isInvaildSession(response.data.status);
                 } else {
                     var factoryCalendar = new FactoryCalendar();
                     response.data.data.forEach((item) => {
@@ -90,6 +125,7 @@ export default {
 
                 }
             }).catch((error) => {
+                that.$store.commit("setIsLoading", false);
                 that.$Message.error({
                   content: "服务器异常,请刷新！！",
                   duration: 0,
@@ -104,7 +140,9 @@ export default {
             var yearListOfShow = DateUtil.yearListOfShow;
             this.axios.get(this.seieiURL + "productionline/getResourceDataByUserId?year=" + yearListOfShow[0]).then((response) => {
                 if (response.data.status) {
+                    that.$store.commit("setIsLoading", false);
                     that.$Message.error(response.data.msg);
+                    that.isInvaildSession(response.data.status);
                 } else {
                     var resourceData = response.data.data;
                     var productlineList = [];
@@ -115,8 +153,8 @@ export default {
                             resourceData[productLineIndex].workgroup,
                             resourceData[productLineIndex].workshop,
                             resourceData[productLineIndex].lineCode,
-                            resourceData[productLineIndex].workhours,
                             resourceData[productLineIndex].peopleNum,
+                            resourceData[productLineIndex].workhours,
                             resourceData[productLineIndex].peopleNumOfLineList,
                             resourceData[productLineIndex].workhoursOfLineList,
                             resourceData[productLineIndex].efficiencyOfLineList
@@ -135,10 +173,12 @@ export default {
                         productlineList.push(productLineItem);
                     }
                     // 保存到 vuex 中
+                    that.$store.commit("setIsLoading", false);
                     that.$store.commit('setProductLineList', productlineList);
                     that.isDone = true;
                 }
             }).catch((error) => {
+                that.$store.commit("setIsLoading", false);
                 that.$Message.error({
                   content: "服务器异常,请刷新！！",
                   duration: 0,
@@ -153,6 +193,7 @@ export default {
             this.axios.get(this.seieiURL + "productionplanningdetail/getAllForAddProgress").then((response) => {
                 if (response.data.status) {
                     that.$Message.error(response.data.msg);
+                    that.isInvaildSession(response.data.status);
                 } else {
                     that.$store.commit("setWaitingAddProgressList", response.data.data);
                 }
@@ -174,6 +215,9 @@ export default {
         'v-progressBarCanvas': progressBarCanvas,
         'v-windowOfAddProgressBar': windowOfAddProgressBar,
         "v-toast": toast,
+        "v-loading": loading,
+        "v-windowOfMenu": windowOfMenu,
+        "v-windowOfMinus": windowOfMinus,
     }
 }
 </script>

@@ -1,0 +1,202 @@
+<template>
+    <div class="windowOfMinus-component zIndexSuperTop">
+        <div class="header">
+            <div class="txt">减 数</div>
+            <div class="closeBtn" @click="hideWindow">
+                <Icon type="ios-close-circle" />
+            </div>
+        </div>
+        <div class="container">
+            <div class="item">
+                <div class="title">
+                    制单号
+                </div>
+                <div class="txt">
+                    {{activedProgressBar.getMsgOfProgressBar.orderno}}
+                </div>
+            </div>
+            <div class="item">
+                <div class="title">
+                    排单数量
+                </div>
+                <div class="txt">
+                    {{activedProgressBar.getQtyofbatcheddelivery}}
+                </div>
+            </div>
+            <div class="item">
+                <div class="title">
+                    已完成数
+                </div>
+                <div class="txt">
+                    <InputNumber v-bind:max="activedProgressBar.getQtyofbatcheddelivery" :min="0" v-model="numOfDone"></InputNumber>
+                </div>
+            </div>
+            <div class="btn" @click="minus">
+                确 认 减 数
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+import DateUtil from "../../common/dateUtil";
+import HistoryObj from "../../vo/historyObj";
+
+
+
+export default {
+    data: function() {
+        return {
+            numOfDone: 0, // 已完成数
+            factoryCalendar: null, // 工厂日历
+        }
+    },
+    computed: {
+        // 激活的进度条
+        activedProgressBar: function() {
+            this.numOfDone = this.$store.state.activedProgressBar.getQtyFinish;
+            return this.$store.state.activedProgressBar;
+        },
+        productLineList: function() {
+            return this.$store.state.productLineList;
+        },
+        ctxOfSource: function() {
+            return this.$store.state.ctxOfSource;
+        }
+    },
+    methods: {
+        // 隐藏窗口
+        hideWindow: function() {
+            this.$store.commit("setIsShowWindowOfMinus", false);
+        },
+        // 点击减数按钮
+        minus: function() {
+            var productLineList = this.productLineList;
+            /**
+             * 记录历史操作
+             */
+            var historyObj = null;
+            var productLineListTemp = [];
+            if (this.$store.state.historyObjList.length == 0) {
+                for (var i=0; i<productLineList.length; i++) {
+                    productLineListTemp.push(productLineList[i].copy());
+                }
+                historyObj = new HistoryObj(
+                    productLineListTemp,
+                    null
+                );
+                this.$store.commit("pushHistoryObjList", historyObj);
+            }
+
+            /**
+             * 减数操作
+             */
+            var timeStampOfToday = DateUtil.getTimeStampOfToday();
+            this.activedProgressBar.minus(productLineList[this.activedProgressBar.getProductLineIndex], this.factoryCalendar, this.numOfDone, timeStampOfToday);
+            // 重新渲染
+            productLineList[this.activedProgressBar.getProductLineIndex].clear(this.ctxOfSource);
+            productLineList[this.activedProgressBar.getProductLineIndex].renderWithOutIdList(this.ctxOfSource, null);
+
+            /**
+             * 记录历史操作
+             */
+            productLineListTemp = [];
+            for (var i=0; i<productLineList.length; i++) {
+                productLineListTemp.push(productLineList[i].copy());
+            }
+            historyObj = new HistoryObj(
+                productLineListTemp,
+                null
+            );
+            this.$store.commit("pushHistoryObjList", historyObj);
+
+            /**
+             * 记录激活的生产线索引对象
+             */
+            this.$store.commit("addActivedObjListOfProductLine", {
+                productLineIndex: this.activedProgressBar.getProductLineIndex,
+                progressBarIndex: productLineList[this.activedProgressBar.getProductLineIndex].getProgressIndexById(this.activedProgressBar.getId)
+            });
+            
+            // 关闭窗口
+            this.hideWindow();
+        }
+    },
+    created: function() {
+        this.factoryCalendar = this.$store.state.factoryCalendarObj;
+    },
+}
+</script>
+
+<style scoped>
+.windowOfMinus-component {
+	position: fixed;
+	right: 0;
+	top: 0;
+	bottom: 0;
+    left: 0;
+    margin: auto;
+    width: 300px;
+    height: 300px;
+	background-color: #fff;
+	border:2px solid #1b72ce;
+}
+.windowOfMinus-component .header {
+	box-sizing: border-box;
+	padding-left: 10px;
+	width: 100%;
+	height: 35px;
+	background-color: #4fa0f6;
+	color: #fff;
+	overflow: hidden;
+}
+.windowOfMinus-component .header .txt {
+	display: inline-block;
+	font-size: 16px;
+	line-height: 35px;
+}
+.windowOfMinus-component .closeBtn {
+	display: inline-block;
+	float: right;
+	width: 35px;
+	font-size: 24px;
+	text-align: center;
+	line-height: 35px;
+	color: #fff;
+}
+.windowOfMinus-component .closeBtn:hover {
+	color: rgba(0, 0, 0, 0.5);
+	cursor:pointer;
+}
+.container .item {
+    margin-top: 10px;
+    font-size: 18px;
+}
+.container .item .title {
+    display: inline-block;
+    width: 35%;
+    padding-left: 10px;
+    vertical-align: top;
+}
+.container .item .txt {
+    display: inline-block;
+    width: 60%;
+    font-weight: 400;
+    word-break: break-word;
+    vertical-align: top;
+}
+.container .btn {
+    margin: 30px auto 0 auto;
+    width: 150px;
+    line-height: 1.8em;
+    text-align: center;
+    font-size: 18px;
+    background-color: #4fa0f6;
+    color: #fff;
+    border-radius: 5px;
+}
+.container .btn:hover {
+    background-color: #1b72ce;
+	cursor:pointer;
+}
+</style>

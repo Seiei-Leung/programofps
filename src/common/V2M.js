@@ -16,7 +16,11 @@ export default class V2M {
         var index = Math.ceil(y / (CONST.STYLEOFCELL.height + 2*CONST.STYLEOFCELL.lineWidth));
         var length = productLineList.length;
         if (length >= index) {
-            return index - 1;
+            if ((index - 1) < 0) {
+                return 0;
+            } else {
+                return index - 1;
+            }
         } else {
             return length - 1;
         }

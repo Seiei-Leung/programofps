@@ -31,7 +31,11 @@ export default class Const {
             height: 34,
             lineWidth: 1,
             borderColor: "#ddd",
-            activedBackgroundColor: "#fffaf2"
+            activedBackgroundColor: "#fffaf2",
+            fontStyle: "14px Arial",
+            fillColor: "#ddd",
+            paddingTop: 10,
+            paddingLeft: 1,
         }
     }
 

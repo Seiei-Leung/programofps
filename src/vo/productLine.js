@@ -1,4 +1,5 @@
 import ProgressBar from "./progressBar";
+import CONST from "../common/const";
 
 // 生产线 vo
 export default class ProductLine {
@@ -27,6 +28,36 @@ export default class ProductLine {
         return this.index;
     }
 
+    // 获取组别
+    get getWorkgroup() {
+        return this.workgroup;
+    }
+
+    // 获取车间
+    get getWorkshop() {
+        return this.workshop;
+    }
+
+    // 获取生产线
+    get getLineCode() {
+        return this.lineCode;
+    }
+
+    // 获取工作人数列表
+    get getPeopleNumOfLineList() {
+        return this.peopleNumOfLineList;
+    }
+
+    // 获取工作时间列表
+    get getWorkhoursOfLineList() {
+        return this.workhoursOfLineList;
+    }
+
+    // 获取效率列表
+    get getEfficiencyOfLineList() {
+        return this.efficiencyOfLineList;
+    }
+
     // 获取生产线全名
     get fullName() {
         return this.workgroup + "-" + this.workshop + "-" + this.lineCode;
@@ -50,12 +81,13 @@ export default class ProductLine {
      * @param {*} timeStamp 时间点
      */
     getPeopleNumByDate(timeStamp) {
+        var peopleNum = this.peopleNum;
         this.peopleNumOfLineList.forEach((item) => {
             if (item.startTime <= timeStamp && timeStamp <= item.endTime) {
-                return item.peopleNum;
+                peopleNum = item.peopleNum;
             }
         });
-        return this.peopleNum;
+        return peopleNum;
     }
 
     /**
@@ -63,12 +95,13 @@ export default class ProductLine {
      * @param {*} timeStamp 时间点
      */
     getWorkHoursByDate(timeStamp) {
+        var workhours = this.workhours;
         this.workhoursOfLineList.forEach((item) => {
             if (item.startTime <= timeStamp && timeStamp <= item.endTime) {
-                return item.workhours;
+                workhours = item.workhours;
             }
         });
-        return this.workhours;
+        return workhours;
     }
 
     // 获取生产线效率
@@ -121,7 +154,7 @@ export default class ProductLine {
     }
 
     /**
-     * 添加新排产进度条到列表
+     * 添加新排产进度条到列表，返回新增排产计划所在的索引
      * @param {*} progressBarOfInsert 排产进度条实例
      * @param {*} factoryCalendar 工厂日历
      */
@@ -180,16 +213,13 @@ export default class ProductLine {
                     progressBarLocal = progressBarOfCompare; // 重置本地生产线用于比较的进度条
                     continue;
                 }
-                // 比较进度条的 **开启时间 ** 与本地进度条的发生重叠
-                else if (relation == "CLASH_STARTTIME") {
+                // 发生重叠
+                else {
+                    // console.log(relation);
                     // 更新发生重叠的数据
                     progressBarOfCompare.reload(this, factoryCalendar, progressBarLocal.getEndTime);
                     progressBarLocal = progressBarOfCompare; // 重置本地生产线用于比较的进度条
                     continue;
-                }
-                // 没有其他情况的可能性了呀
-                else {
-                    console.log(relation);
                 }
             }
         }
@@ -199,6 +229,7 @@ export default class ProductLine {
             // 插入数据
             this.progressList.splice(progressBarIndexOfReset, 0, progressBarOfInsert);
         }
+        return this.getProgressIndexById(progressBarOfInsert.getId) + "";
     }
 
     /**
@@ -206,9 +237,7 @@ export default class ProductLine {
      * @param {*} ctx 画布上下文
      */
     clear(ctx) {
-        this.progressList.forEach((item) => {
-            item.clear(ctx);
-        })
+        ctx.clearRect(0, (CONST.STYLEOFCELL.height + 2*CONST.STYLEOFCELL.lineWidth)*this.index, ctx.canvas.offsetWidth, CONST.STYLEOFCELL.height);
     }
 
     /**
@@ -218,15 +247,54 @@ export default class ProductLine {
      */
     renderWithOutIdList(ctx, idList) {
         if (idList == null) {
-            this.progressList.forEach((item) => {
-                item.render(ctx);
-            });
+            for (var i=0; i<this.progressList.length; i++) {
+                // 是否发生重叠
+                if (this.progressList[i+1] != null && this.progressList[i].getEndTime > this.progressList[i+1].getStartTime) {
+                    this.progressList[i].render(ctx, true);
+                } else {
+                    this.progressList[i].render(ctx, false);
+                }
+            }
         } else {
             for (var i=0; i<this.progressList.length; i++) {
+                // 是否在排除 id 的列表中
                 if (idList.indexOf(this.progressList[i].id) == -1) {
-                    this.progressList[i].render(ctx);
+                    // 是否发生了重叠
+                    if (this.progressList[i+1] != null && this.progressList[i].getEndTime > this.progressList[i+1].getStartTime) {
+                        this.progressList[i].render(ctx, true);
+                    } else {
+                        this.progressList[i].render(ctx, false);
+                    }
                 }
             }
         }
     }
+
+    /**
+     * 复制对象
+     */
+    copy() {
+        var that = this;
+        var progressList = [];
+        this.getProgressList.forEach((item) => {
+            progressList.push(item.copy());
+        });
+        var productionLine = new ProductLine(
+            that.id,
+            that.index,
+            that.workgroup,
+            that.workshop,
+            that.lineCode,
+            that.peopleNum,
+            that.workhours,
+            that.peopleNumOfLineList,
+            that.workhoursOfLineList,
+            that.efficiencyOfLineList
+        );
+        productionLine.setProgressList(progressList);
+        return productionLine;
+    }
+
+
+
 }

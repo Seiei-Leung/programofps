@@ -1,47 +1,152 @@
 <template>
     <div class="topToolBar-component zIndexSuperTop">
         <!-- 编辑工具栏 -->
-        <div class="item" @click="historyBack">撤回<i class="iconfont icon-jijiangdaozhang"></i></div>
-        <div class="item" @click="historyRemake">重做<i class="iconfont icon-zuji"></i></div>
-        <div class="item" @click="submitBtn">保存<i class="iconfont icon-selectfill"></i></div>
-        <div class="item" @click="refreshPage">刷新<i class="iconfont icon-refresh"></i></div>
-        <div class="item" @click="showNumberOfWork"><span v-show="!isShowNumberofwork">显示工作人数</span><span v-show="isShowNumberofwork">隐藏工作人数</span><i class="iconfont icon-favfill"></i></div>
-        <div class="item" @click="showWorkingHours"><span v-show="!isShowWorkingHours">显示工作时间</span><span v-show="isShowWorkingHours">隐藏工作时间</span><i class="iconfont icon-favfill"></i></div>
+        <div class="item item1" @click="historyBack">撤回 <Icon type="ios-rewind" /></div>
+        <div class="item item2" @click="historyRemake">重做 <Icon type="ios-fastforward" /></div>
+        <div class="item" @click="submitBtn">保存 <Icon type="md-cloud-upload" /></div>
+        <div class="item" @click="refreshPage">刷新 <Icon type="md-refresh" /></div>
+        <div class="item item3" @click="showNumberOfWork"><span v-show="!isShowNumberofwork">显示工作人数</span><span v-show="isShowNumberofwork">隐藏工作人数</span> <Icon type="ios-body" /></div>
+        <div class="item item3"  @click="showWorkingHours"><span v-show="!isShowWorkingHours">显示工作时间</span><span v-show="isShowWorkingHours">隐藏工作时间</span> <Icon type="md-alarm" /></div>
     </div>
 </template>
 
 <script>
+import MapListUtil from "../../common/mapListUtil";
+
 export default {
     data: function() {
         return {
         }
     },
     computed: {
+        // 是否显示工作人数
         isShowNumberofwork() {
             return this.$store.state.isShowNumberofwork;
         },
+        // 是否显示工作时间
         isShowWorkingHours() {
             return this.$store.state.isShowWorkingHours;
+        },
+        // 返回原生画布
+        ctxOfSource() {
+            return this.$store.state.ctxOfSource;
         }
     },
     methods: {
+        // 历史撤回
         historyBack: function() {
-
+            var historyObjList = this.$store.state.historyObjList;
+            var activedIndexListOfProductLine = MapListUtil.getKeysFromMapList(this.$store.state.activedObjListOfProductLine);
+            if (historyObjList.length == 0) {
+                return;
+            }
+            if (this.$store.state.activedIndexOfHistoryObjList == null) {
+                this.$store.commit("setActivedIndexOfHistoryObjList", historyObjList.length-1);
+            }
+            if (this.$store.state.activedIndexOfHistoryObjList == 0) {
+                return;
+            }
+            this.$store.commit("setActivedIndexOfHistoryObjList", (this.$store.state.activedIndexOfHistoryObjList-1));
+            var historyObj = historyObjList[this.$store.state.activedIndexOfHistoryObjList];
+            this.$store.commit("setProductLineList", historyObj.getDataOfProductLineList);
+            activedIndexListOfProductLine.forEach((item) => {
+                historyObj.getDataOfProductLineList[item].clear(this.ctxOfSource);
+                historyObj.getDataOfProductLineList[item].renderWithOutIdList(this.ctxOfSource, null);
+            })
+            if (historyObj.getIsAddProgress) {
+                this.$store.commit("setWaitingAddProgressList", historyObj.getDataOfWaitingAddProgressList);
+            }
         },
+        // 历史重做
         historyRemake: function() {
-
+            var historyObjList = this.$store.state.historyObjList;
+            var activedIndexListOfProductLine = MapListUtil.getKeysFromMapList(this.$store.state.activedObjListOfProductLine);
+            if (historyObjList.length == 0) {
+                return;
+            }
+            if (this.$store.state.activedIndexOfHistoryObjList == null) {
+                return;
+            }
+            if (this.$store.state.activedIndexOfHistoryObjList == (historyObjList.length-1)) {
+                return;
+            }
+            this.$store.commit("setActivedIndexOfHistoryObjList", (this.$store.state.activedIndexOfHistoryObjList+1));
+            var historyObj = historyObjList[this.$store.state.activedIndexOfHistoryObjList];
+            this.$store.commit("setProductLineList", historyObj.getDataOfProductLineList);
+            activedIndexListOfProductLine.forEach((item) => {
+                historyObj.getDataOfProductLineList[item].clear(this.ctxOfSource);
+                historyObj.getDataOfProductLineList[item].renderWithOutIdList(this.ctxOfSource, null);
+            })
+            if (historyObj.getIsAddProgress) {
+                this.$store.commit("setWaitingAddProgressList", historyObj.getDataOfWaitingAddProgressList);
+            }
         },
+        // 保存数据
         submitBtn: function() {
-
+            var that = this;
+            var dataList = []; // 用于上传数据列表
+            var productLineList = this.$store.state.productLineList; // 生产线列表数据
+            var activedObjListOfProductLine = this.$store.state.activedObjListOfProductLine; // 激活的生产线索引对象列表
+            if (activedObjListOfProductLine.length == 0) {
+                return;
+            }
+            this.$store.commit("setIsLoading", true);
+            var activedIndexListOfProductLine = MapListUtil.getKeysFromMapList(activedObjListOfProductLine); // 激活的生产线索引列表
+            // 循环激活生产线索引列表，获取详情
+            activedIndexListOfProductLine.forEach((item) => {
+                // 激活生产线中的需要更新的排产计划索引
+                var progressBarIndex = MapListUtil.getObjFromMapListByKey(activedObjListOfProductLine, item)[item];
+                if (progressBarIndex != null) {
+                    // 激活生产线的数据
+                    var progressListTemp = productLineList[item].getProgressList;
+                    // 组装提交 Obj
+                    for (var i=progressBarIndex; i<progressListTemp.length; i++) {
+                        var progressBar = progressListTemp[i]; // 排产计划对象
+                        var obj = {};
+                        obj.productionLineId = progressBar.geProductLineId; // 更新生产线id
+                        obj.id = progressBar.getId; // 确定排产计划 id
+                        obj.qtyFinish = progressBar.getQtyFinish; // 更新工作完成数量
+                        obj.qtyofbatcheddelivery = progressBar.getQtyofbatcheddelivery; // 更新计划数量
+                        obj.startTime = progressBar.getStartTime; // 更新开始时间
+                        obj.endTime = progressBar.getEndTime; // 更新结束时间
+                        dataList.push(obj);
+                    }
+                }
+            });
+            this.axios.post(this.seieiURL + "productionplanningdetail/updateProgress", dataList).then((response) => {
+               if (response.data.status) {
+                    that.$Message.error(response.data.msg);
+                    that.$store.commit("setIsLoading", false);
+                    that.isInvaildSession(response.data.status);
+               } else {
+                    // 清空历史记录
+                    that.$store.commit("setHistoryObjList", []);
+                    that.$store.commit("setActivedObjListOfProductLine", []);
+                    that.$store.commit("setActivedIndexOfHistoryObjList", null);
+                    that.$store.commit("setIsLoading", false);
+                    that.$Message.success("更新成功");
+               }
+            }).catch((error) => {
+                that.$store.commit("setIsLoading", false);
+                that.$Message.error({
+                  content: "服务器异常,请刷新！！",
+                  duration: 0,
+                  closable: true
+                });
+                console.log(error);
+            });
         },
+        // 刷新数据
         refreshPage: function() {
-
+            window.location.reload();
         },
+        // 显示人数
         showNumberOfWork: function() {
-
+            this.$store.commit("toggleNumberofwork");
         },
+        // 显示工作时间
         showWorkingHours: function() {
-
+            this.$store.commit("toggleWorkingHours");
         }
     }
 }
@@ -65,12 +170,21 @@ export default {
     line-height: 25px;
     font-size: 14px;
     border-radius: 4px;
-    background-color: #3BBF67;
+    background-color: #3bbf67;
     color: #fff;
 }
+.topToolBar-component .item1{
+    background-color:#ed4014;
+}
+.topToolBar-component .item2{
+    background-color:#ffad33;
+}
+.topToolBar-component .item3 {
+    background-color: #4fa0f6;
+}
 .topToolBar-component .item:hover {
-	background-color: #23733e;;
-	cursor:pointer
+	background-color: rgba(0,0,0,0.5);
+	cursor:pointer;
 }
 .topToolBar-component .iconfont {
 	margin-left: 4px;

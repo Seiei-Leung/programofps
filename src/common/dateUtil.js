@@ -163,4 +163,13 @@ export default class DateUtil {
         var timeStamp = DateUtil.firstTimeStampOfShow + index * DateUtil.timeStampOfOneDay;
         return DateUtil.timeStampToDate(timeStamp);
     }
+
+    /**
+     * 获取今天0时0点0秒的时间戳
+     */
+    static getTimeStampOfToday() {
+        var now = new Date().getTime();
+        return DateUtil.strToTimeStamp(DateUtil.timeStampToDate(now));
+    }
+
 }

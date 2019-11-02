@@ -1,26 +1,25 @@
 <template>
     <div class="windowOfAddProgress-component">
         <!-- 右侧显示窗口按钮 -->
-        <div class="showWindowBtn zIndexSuperTop" @click="toggleWindow" v-show="!isShowWindow">
+        <div class="showWindowBtn zIndexSuperTop" @click="showWindow" v-show="!isShowWindow">
             添<br />加<br />排<br />产<br />
         </div>
 		<div v-show="isShowWindow" class="windowOfAddProgress zIndexSuperTop" v-bind:style="{top: cssOfWindow.top + 'px'}">
             <div class="header">
                 <div class="txt">添 加 排 产</div>
-                <div class="closeBtn" @click="toggleWindow">
+                <div class="closeBtn" @click="hideWindow">
                     <Icon type="ios-close-circle" />
                 </div>
             </div>
 			<!-- 筛选条件输入区域 -->
 			<div class="filterWrapper">
-				<!--  -->
-<!-- 				<div class="item">
+				<div class="item">
 					<div class="title">筛选制单号</div>
-					<Input  v-model="filterProductionLine" style="width: 50px" @on-change="filterSumTableData" />
-				</div> -->
+					<Input v-model="filterOrderno" style="margin-left: 5px;width: 150px;" @on-change="filterData" />
+				</div>
 			</div>
 			<!-- 表格 -->
-			<Table height="450" border :columns="tableTitle" :data="waitingAddProgressList" @on-row-dblclick="dragProgress"></Table>
+			<Table height="450" border :columns="tableTitle" :data="waitingAddProgressListForShow" @on-row-dblclick="dragProgress"></Table>
 		</div>
     </div>
 </template>
@@ -47,7 +46,8 @@ export default {
 				{
                 	title: '计划数量',
                 	key: 'qtyofbatcheddelivery',
-                	align: "center"
+                	align: "center",
+                    sortable: true
 				},
 				{
                 	title: '离厂日期',
@@ -61,11 +61,10 @@ export default {
 						);
 					}
 				}
-			]
-
-
-
-
+			],
+			waitingAddProgressList: [], // 待添加信息的列表源数据
+			waitingAddProgressListForShow: [], // 用于显示待添加信息列表
+			filterOrderno: "",
         }
 	},
 	computed: {
@@ -78,18 +77,20 @@ export default {
 			return {
 				top: CONST.STYLEOFTOOLBAR.height + CONST.STYLEOFTOOLBAR.lineWidth
 			}
-		},
-		// 获取待添加详情列表
-		waitingAddProgressList: function() {
-			return this.$store.state.waitingAddProgressList;
 		}
 	},
 	methods: {
-		// 切换窗口显示
-		toggleWindow: function() {
-			this.$store.commit("toggleIsShowWindowOfAddProgress");
+		// 窗口显示
+		showWindow: function() {
+			this.waitingAddProgressList = this.$store.state.waitingAddProgressList;
+			this.waitingAddProgressListForShow = [...this.waitingAddProgressList];
+			this.$store.commit("closeAllWindow");
+			this.$store.commit("setIsShowWindowOfAddProgress", true);
 		},
-		// 
+		hideWindow: function() {
+			this.$store.commit("setIsShowWindowOfAddProgress", false);
+		},
+		// 双击添加 进度条 
 		dragProgress: function(data, index) {
 			var progressBar = new ProgressBar(
 				null,
@@ -98,15 +99,23 @@ export default {
 			);
 			this.$store.commit("setActivedProgressBar", progressBar); // 确定拖动进度条
 			this.$store.commit("toggleIsShowCtxOfTmp"); // 显示拖动图层
-			this.$store.commit("toggleIsShowWindowOfAddProgress"); // 关闭窗口
+			this.$store.commit("closeAllWindow"); // 关闭窗口
+		},
+		// 筛选数据
+		filterData: function() {
+			var that = this;
+			var waitingAddProgressListForShow = [];
+			if (this.filterOrderno == "") {
+				this.waitingAddProgressListForShow = this.waitingAddProgressList;
+				return;
+			}
+			this.waitingAddProgressList.forEach((item) => {
+				if (this.filterOrderno == item.orderno) {
+					waitingAddProgressListForShow.push(item);
+				}
+			});
+			this.waitingAddProgressListForShow = waitingAddProgressListForShow;
 		}
-
-
-
-
-
-
-
 	}
 }
 </script>
@@ -122,9 +131,13 @@ export default {
 	font-size: 16px;
 	line-height: 1.2;
 	color: #fff;
-	background-color: #3bbf67;
+	background-color: #4fa0f6;
 	border-top-left-radius: 4px;
 	border-bottom-left-radius: 4px;
+}
+.showWindowBtn:hover {
+	background-color: #2d547e;
+	cursor:pointer;
 }
 .windowOfAddProgress {
 	position: fixed;
@@ -133,14 +146,14 @@ export default {
 	bottom: 0;
 	left: 70%;
 	background-color: #fff;
-	border:2px solid #3bbf67
+	border:2px solid #1b72ce;
 }
 .windowOfAddProgress .header {
 	box-sizing: border-box;
 	padding-left: 10px;
 	width: 100%;
 	height: 35px;
-	background-color: #3bbf67;
+	background-color: #4fa0f6;
 	color: #fff;
 	overflow: hidden;
 }
@@ -156,6 +169,16 @@ export default {
 	font-size: 24px;
 	text-align: center;
 	line-height: 35px;
+	color: #fff;
+}
+.windowOfAddProgress .closeBtn:hover {
 	color: rgba(0, 0, 0, 0.5);
+	cursor:pointer;
+}
+.filterWrapper {
+	padding: 10px;
+}
+.filterWrapper .item .title{
+    display: inline-block;
 }
 </style>
