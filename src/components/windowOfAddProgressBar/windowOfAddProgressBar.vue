@@ -4,7 +4,7 @@
         <div class="showWindowBtn zIndexSuperTop" @click="showWindow" v-show="!isShowWindow">
             添<br />加<br />排<br />产<br />
         </div>
-		<div v-show="isShowWindow" class="windowOfAddProgress zIndexSuperTop" v-bind:style="{top: cssOfWindow.top + 'px'}">
+		<div v-show="isShowWindow" class="windowOfAddProgress zIndexSuperTop window" v-bind:style="{top: cssOfWindow.top + 'px'}">
             <div class="header">
                 <div class="txt">添 加 排 产</div>
                 <div class="closeBtn" @click="hideWindow">
@@ -147,33 +147,6 @@ export default {
 	left: 70%;
 	background-color: #fff;
 	border:2px solid #1b72ce;
-}
-.windowOfAddProgress .header {
-	box-sizing: border-box;
-	padding-left: 10px;
-	width: 100%;
-	height: 35px;
-	background-color: #4fa0f6;
-	color: #fff;
-	overflow: hidden;
-}
-.windowOfAddProgress .header .txt {
-	display: inline-block;
-	font-size: 16px;
-	line-height: 35px;
-}
-.windowOfAddProgress .closeBtn {
-	display: inline-block;
-	float: right;
-	width: 35px;
-	font-size: 24px;
-	text-align: center;
-	line-height: 35px;
-	color: #fff;
-}
-.windowOfAddProgress .closeBtn:hover {
-	color: rgba(0, 0, 0, 0.5);
-	cursor:pointer;
 }
 .filterWrapper {
 	padding: 10px;

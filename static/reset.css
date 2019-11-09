@@ -24,3 +24,7 @@ i{font-style:normal;-webkit-user-select: none;}
 .zIndexTop{z-index: 10;}
 .zIndexMiddle{z-index: 0;}
 .zIndexLow{z-index: -10;}
+.window .header {display: flex;justify-content: space-between;box-sizing: border-box;padding-left: 10px;width: 100%;height: 35px;background-color: #4fa0f6;color: #fff;overflow: hidden;}
+.window .header .txt {flex-grow: 1;font-size: 16px;line-height: 35px;}
+.window .header .closeBtn {width: 35px;font-size: 24px;text-align: center;line-height: 35px;color: #fff;}
+.window .header .closeBtn:hover {color: rgba(0, 0, 0, 0.5);cursor:pointer;}

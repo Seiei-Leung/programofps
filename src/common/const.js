@@ -50,4 +50,20 @@ export default class Const {
         }
     }
 
+    // 窗口 CSS 样式
+    static get STYLEOFWINDOW() {
+        return {
+            titleHeight: 35
+        }
+    }
+
+    // 右键菜单栏样式
+    static get STYLEOFMENU() {
+        return {
+            width: 150,
+            height: 65
+        }
+    }
+
+
 }

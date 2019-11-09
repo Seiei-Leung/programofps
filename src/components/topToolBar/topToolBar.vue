@@ -12,6 +12,9 @@
 
 <script>
 import MapListUtil from "../../common/mapListUtil";
+import DateUtil from "../../common/dateUtil";
+import ProgressBar from "../../vo/progressBar";
+import ProductLine from "../../vo/productLine";
 
 export default {
     data: function() {
@@ -30,6 +33,10 @@ export default {
         // 返回原生画布
         ctxOfSource() {
             return this.$store.state.ctxOfSource;
+        },
+        // 颜色设置
+        colorSetting() {
+            return this.$store.state.colorSetting;
         }
     },
     methods: {
@@ -51,7 +58,7 @@ export default {
             this.$store.commit("setProductLineList", historyObj.getDataOfProductLineList);
             activedIndexListOfProductLine.forEach((item) => {
                 historyObj.getDataOfProductLineList[item].clear(this.ctxOfSource);
-                historyObj.getDataOfProductLineList[item].renderWithOutIdList(this.ctxOfSource, null);
+                historyObj.getDataOfProductLineList[item].renderWithOutIdList(this.ctxOfSource, this.colorSetting, null);
             })
             if (historyObj.getIsAddProgress) {
                 this.$store.commit("setWaitingAddProgressList", historyObj.getDataOfWaitingAddProgressList);
@@ -75,7 +82,7 @@ export default {
             this.$store.commit("setProductLineList", historyObj.getDataOfProductLineList);
             activedIndexListOfProductLine.forEach((item) => {
                 historyObj.getDataOfProductLineList[item].clear(this.ctxOfSource);
-                historyObj.getDataOfProductLineList[item].renderWithOutIdList(this.ctxOfSource, null);
+                historyObj.getDataOfProductLineList[item].renderWithOutIdList(this.ctxOfSource, this.colorSetting, null);
             })
             if (historyObj.getIsAddProgress) {
                 this.$store.commit("setWaitingAddProgressList", historyObj.getDataOfWaitingAddProgressList);
@@ -109,6 +116,10 @@ export default {
                         obj.qtyofbatcheddelivery = progressBar.getQtyofbatcheddelivery; // 更新计划数量
                         obj.startTime = progressBar.getStartTime; // 更新开始时间
                         obj.endTime = progressBar.getEndTime; // 更新结束时间
+                        // 对因拆单而新增的排产进度条，从而赋值原拆单的进度条 ID
+                        if (progressBar.getParentId) {
+                            obj.parentId = progressBar.getParentId;
+                        }
                         dataList.push(obj);
                     }
                 }
@@ -119,12 +130,66 @@ export default {
                     that.$store.commit("setIsLoading", false);
                     that.isInvaildSession(response.data.status);
                } else {
-                    // 清空历史记录
-                    that.$store.commit("setHistoryObjList", []);
-                    that.$store.commit("setActivedObjListOfProductLine", []);
-                    that.$store.commit("setActivedIndexOfHistoryObjList", null);
-                    that.$store.commit("setIsLoading", false);
-                    that.$Message.success("更新成功");
+                    // 刷新数据
+                    var yearListOfShow = DateUtil.yearListOfShow;
+                    that.axios.get(that.seieiURL + "productionline/getResourceDataByUserId?year=" + yearListOfShow[0]).then((response) => {
+                        if (response.data.status) {
+                            that.$store.commit("setIsLoading", false);
+                            that.$Message.error(response.data.msg);
+                            that.isInvaildSession(response.data.status);
+                        } else {
+                            var resourceData = response.data.data;
+                            var productlineList = [];
+                            for (var productLineIndex=0; productLineIndex<resourceData.length; productLineIndex++) {
+                                var productLineItem = new ProductLine(
+                                    resourceData[productLineIndex].id,
+                                    productLineIndex,
+                                    resourceData[productLineIndex].workgroup,
+                                    resourceData[productLineIndex].workshop,
+                                    resourceData[productLineIndex].lineCode,
+                                    resourceData[productLineIndex].peopleNum,
+                                    resourceData[productLineIndex].workhours,
+                                    resourceData[productLineIndex].defaultStyleName,
+                                    resourceData[productLineIndex].peopleNumOfLineList,
+                                    resourceData[productLineIndex].workhoursOfLineList,
+                                    resourceData[productLineIndex].efficiencyOfLineList
+                                );
+                                var progressList = [];
+                                for (var progressIndex=0; progressIndex<resourceData[productLineIndex].productionPlanningDetailList.length; progressIndex++) {
+                                    var progressItemTemp = resourceData[productLineIndex].productionPlanningDetailList[progressIndex];
+                                    var progressItem = new ProgressBar(
+                                        productLineIndex,
+                                        resourceData[productLineIndex].id,
+                                        progressItemTemp
+                                    ); 
+                                    progressList.push(progressItem);
+                                }
+                                productLineItem.setProgressList(progressList);
+                                productlineList.push(productLineItem);
+                            }
+                            // 保存到 vuex 中
+                            that.$store.commit("setIsLoading", false);
+                            that.$store.commit('setProductLineList', productlineList);
+                            // 重新渲染
+                            productlineList.forEach((item) => {
+                                item.clear(that.ctxOfSource);
+                                item.renderWithOutIdList(that.ctxOfSource, that.colorSetting, null);
+                            });
+                            // 清空历史记录
+                            that.$store.commit("setHistoryObjList", []);
+                            that.$store.commit("setActivedObjListOfProductLine", []);
+                            that.$store.commit("setActivedIndexOfHistoryObjList", null);
+                            that.$Message.success("更新成功");
+                        }
+                    }).catch((error) => {
+                        that.$store.commit("setIsLoading", false);
+                        that.$Message.error({
+                          content: "服务器异常,请刷新！！",
+                          duration: 0,
+                          closable: true
+                        });
+                        console.log(error);
+                    });
                }
             }).catch((error) => {
                 that.$store.commit("setIsLoading", false);
@@ -148,6 +213,8 @@ export default {
         showWorkingHours: function() {
             this.$store.commit("toggleWorkingHours");
         }
+    },
+    created: function() {
     }
 }
 </script>

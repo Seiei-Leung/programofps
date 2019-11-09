@@ -3,12 +3,18 @@ import Vuex from 'vuex';
 import CONST from "../common/const";
 import MapListUtil from "../common/mapListUtil";
 import MapUtil from '../common/mapListUtil';
-import { stat } from 'fs';
+import moduleOfSwitch from "./moduleOfSwitch";
 
 Vue.use(Vuex);
 
 export default new Vuex.Store({
+	// 引入模块
+	modules: {
+		moduleOfSwitch: moduleOfSwitch,
+	},
 	state: {
+		isInited: false, // 初始化时，是否加载数据完成
+		colorSetting: null, // 计划进度颜色设置
 		isShowNumberofwork: false, // 是否显示人数
 		isShowWorkingHours: false, // 是否显示工作时间
 		ctxOfSource: null, // 源画布 上下文
@@ -46,8 +52,20 @@ export default new Vuex.Store({
 		}, // 右键菜单的位置 CSS 样式
 		isShowWindowOfMenu: false, // 是否显示右键菜单窗口
 		isShowWindowOfMinus: false, // 是否显示减数窗口
+		isShowWindowOfDetail: false, // 是否显示详情窗口
+		isShowWindowOfSeparateBill: false, // 是否显示拆单窗口
+		isShowBackgroundForDrawWindow: false, // 是否显示拖动图层
+		domOfDragWindow: null, // 拖动窗口的 dom
 	},
 	mutations: {
+		// 初始化时，是否加载数据完成
+		setIsInited(state, data) {
+			state.isInited = data;
+		},
+		// 计划进度颜色设置
+		setColorSetting(state, data) {
+			state.colorSetting = data;
+		},
 		// 显示人数
 		toggleNumberofwork(state) {
 			if (state.isShowNumberofwork) {
@@ -228,11 +246,29 @@ export default new Vuex.Store({
 		setIsShowWindowOfMinus(state, data) {
 			state.isShowWindowOfMinus = data;
 		},
+		// 切换显示详情窗口
+		setIsShowWindowOfDetail(state, data) {
+			state.isShowWindowOfDetail = data;
+		},
+		// 切换显示减数窗口
+		setIsShowWindowOfSeparateBill(state, data) {
+			state.isShowWindowOfSeparateBill = data;
+		},
+		// 切换显示拖动图层
+		setIsShowBackgroundForDrawWindow(state, data) {
+			state.isShowBackgroundForDrawWindow = data;
+		},
+		// 设置 拖动窗口 dom
+		setDomOfDragWindow(state, data) {
+			state.domOfDragWindow = data;
+		},
 		// 全部窗口关闭
 		closeAllWindow(state) {
 			state.isShowWindowOfAddProgress = false;
 			state.isShowWindowOfMenu = false;
 			state.isShowWindowOfMinus = false;
+			state.isShowWindowOfDetail = false;
+			state.isShowWindowOfSeparateBill = false;
 		}
 	}
 })

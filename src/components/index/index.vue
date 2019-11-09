@@ -3,22 +3,13 @@
         <!-- 编辑工具栏 -->
         <v-topToolBar></v-topToolBar>
         <!-- 左侧生产线栏 -->
-        <v-productLinBar
-            v-if="isDone"
-            ref="productLinesBarHook">
-        </v-productLinBar>
+        <v-productLinBar v-if="isDone"></v-productLinBar>
         <!-- 日期栏 -->
-        <v-dateBar 
-            v-if="isDone"
-        ></v-dateBar>
+        <v-dateBar v-if="isDone"></v-dateBar>
         <!-- 背景画布 -->
-        <v-backgroundCanvas
-            v-if="isDone">
-        </v-backgroundCanvas>
+        <v-backgroundCanvas v-if="isDone"></v-backgroundCanvas>
         <!-- 装载进度条画布 -->
-        <v-progressBarCanvas
-            v-if="isDone"
-        ></v-progressBarCanvas>
+        <v-progressBarCanvas v-if="isDone"></v-progressBarCanvas>
         <!-- 右侧添加进度条窗口 -->
         <v-windowOfAddProgressBar></v-windowOfAddProgressBar>
         <!-- 提示组件 -->
@@ -27,6 +18,12 @@
         <v-windowOfMenu v-show="isShowWindowOfMenu"></v-windowOfMenu>
         <!-- 减数窗口 -->
         <v-windowOfMinus v-if="isShowWindowOfMinus"></v-windowOfMinus>
+        <!-- 详情窗口 -->
+        <v-windowOfDetail v-if="isShowWindowOfDetail"></v-windowOfDetail>
+        <!-- 拆单窗口 -->
+        <v-windowOfSeparateBill v-if="isShowWindowOfSeparateBill"></v-windowOfSeparateBill>
+        <!-- 拖动窗口图层 -->
+        <v-backgroundForDrawWindow v-if="isShowBackgroundForDrawWindow"></v-backgroundForDrawWindow>
         <!-- loading 组件 -->
         <v-loading v-show="isLoading"></v-loading>
     </div>
@@ -48,7 +45,11 @@ import toast from "../toast/toast";
 import loading from "../loading/loading";
 import windowOfMenu from "../windowOfMenu/windowOfMenu";
 import windowOfMinus from "../windowOfMinus/windowOfMinus";
+import windowOfDetail from "../windowOfDetail/windowOfDetail";
+import windowOfSeparateBill from "../windowOfSeparateBill/windowOfSeparateBill";
+import backgroundForDrawWindow from "../backgroundForDrawWindow/backgroundForDrawWindow";
 import ScrollUtil from "../../common/scrollUtil";
+import ColorSetting from "../../vo/colorSetting";
 
 export default {
     data: function() {
@@ -77,16 +78,29 @@ export default {
         isShowWindowOfMenu: function() {
             return this.$store.state.isShowWindowOfMenu;
         },
+        // 是否显示减数窗口
         isShowWindowOfMinus: function() {
             return this.$store.state.isShowWindowOfMinus;
-        }
+        },
+        // 是否显示详情窗口
+        isShowWindowOfDetail: function() {
+            return this.$store.state.isShowWindowOfDetail;
+        },
+        // 是否显示拖动图层
+        isShowBackgroundForDrawWindow: function() {
+            return this.$store.state.isShowBackgroundForDrawWindow;
+        },
+        // 是否显示拆单图层
+        isShowWindowOfSeparateBill: function() {
+            return this.$store.state.isShowWindowOfSeparateBill;
+        },
     },
     created: function() {
-        this.getFactoryCalendar();
+        this.getColorSetting();
         this.getAllForAddProgress();
 		var that = this;
 		
-		// 检查滚动
+		// 绑定滚动事件
 		this.$nextTick(() => {
 			var scrollUtil = new ScrollUtil();
 			window.onscroll = function() {
@@ -100,10 +114,43 @@ export default {
 		});
     },
     methods: {
+        // 获取进度条颜色样式
+        getColorSetting: function() {
+            var that = this;
+            this.$store.commit("setIsLoading", true);
+            this.axios.get(this.seieiURL + "colorSetting/getByUserId").then((response) => {
+                if (response.data.status) {
+                    that.$store.commit("setIsLoading", false);
+                    that.$Message.error(response.data.msg);
+                    that.isInvaildSession(response.data.status);
+                } else {
+                    var data = response.data.data;
+                    // 保存到 vuex
+                    var colorSetting = new ColorSetting(
+                        data.defaultColor,
+                        data.defaultAdvanceColor,
+                        data.defaultDelayColor,
+                        data.advanceColor,
+                        data.advanceDaynum,
+                        data.delayColor,
+                        data.delayDaynum
+                    );
+                    that.$store.commit("setColorSetting", colorSetting);
+                    that.getFactoryCalendar();
+                }
+            }).catch((error) => {
+                that.$store.commit("setIsLoading", false);
+                that.$Message.error({
+                  content: "服务器异常,请刷新！！",
+                  duration: 0,
+                  closable: true
+                });
+                console.log(error);
+            });
+        },
         // 获取工厂日历
         getFactoryCalendar: function() {
             var that = this;
-            this.$store.commit("setIsLoading", true);
             var yearListOfShow = DateUtil.yearListOfShow;
             this.axios.get(this.seieiURL + "factoryCalendar/getFactoryCalendarByYear?yearList=" + yearListOfShow.join(",")).then((response) => {
                 if (response.data.status) {
@@ -121,7 +168,7 @@ export default {
                     });
                     // 保存到 vuex 中
                     that.$store.commit('setFactoryCalendarObj', factoryCalendar);
-                    that.getProductLine();
+                    that.getMsgOfProductLine();
 
                 }
             }).catch((error) => {
@@ -135,7 +182,7 @@ export default {
             });
         },
         // 获取生产线信息
-        getProductLine: function() {
+        getMsgOfProductLine: function() {
             var that = this;
             var yearListOfShow = DateUtil.yearListOfShow;
             this.axios.get(this.seieiURL + "productionline/getResourceDataByUserId?year=" + yearListOfShow[0]).then((response) => {
@@ -155,6 +202,7 @@ export default {
                             resourceData[productLineIndex].lineCode,
                             resourceData[productLineIndex].peopleNum,
                             resourceData[productLineIndex].workhours,
+                            resourceData[productLineIndex].defaultStyleName,
                             resourceData[productLineIndex].peopleNumOfLineList,
                             resourceData[productLineIndex].workhoursOfLineList,
                             resourceData[productLineIndex].efficiencyOfLineList
@@ -187,25 +235,6 @@ export default {
                 console.log(error);
             });
         },
-        // 获取待排产的详情列表
-        getAllForAddProgress: function() {
-            var that = this;
-            this.axios.get(this.seieiURL + "productionplanningdetail/getAllForAddProgress").then((response) => {
-                if (response.data.status) {
-                    that.$Message.error(response.data.msg);
-                    that.isInvaildSession(response.data.status);
-                } else {
-                    that.$store.commit("setWaitingAddProgressList", response.data.data);
-                }
-            }).catch((error) => {
-                that.$Message.error({
-                  content: "服务器异常,请刷新！！",
-                  duration: 0,
-                  closable: true
-                });
-                console.log(error);
-            });
-        }
     },
     components: {
         'v-topToolBar': topToolBar,
@@ -218,6 +247,9 @@ export default {
         "v-loading": loading,
         "v-windowOfMenu": windowOfMenu,
         "v-windowOfMinus": windowOfMinus,
+        "v-windowOfDetail": windowOfDetail,
+        "v-windowOfSeparateBill": windowOfSeparateBill,
+        "v-backgroundForDrawWindow": backgroundForDrawWindow,
     }
 }
 </script>

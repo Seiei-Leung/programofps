@@ -18,12 +18,23 @@ export default class ProgressBar {
         this.productStyleName = msgOfProgressBar.productStyleName; // 品类
         this.startTime = msgOfProgressBar.startTime; // 开始时间
         this.endTime = msgOfProgressBar.endTime; // 结束时间
+        this.efficiencyBySetting = msgOfProgressBar.efficiencyBySetting; // 自选效率
         this.msgOfProgressBar = msgOfProgressBar; // 排产进度条详情
+        this.isLocked = true; // 是否上锁
+        this.parentId = null; // 原拆单的进度条 ID
     }
 
     // 获取 进度条 Id
     get getId() {
         return this.id;
+    }
+
+    // 获取 原拆单的进度条 ID
+    get getParentId() {
+        if (this.parentId != null) {
+            return this.parentId;
+        }
+        return false;
     }
 
     // 获取 完成数量
@@ -44,6 +55,69 @@ export default class ProgressBar {
     // 获取产品类名
     get getProductStyleName() {
         return this.productStyleName;
+    }
+
+    // 返回产品效率
+    get getEfficiencyOfClass() {
+        return this.efficiencyOfClass;
+    }
+
+    /**
+     * 获取该进度条在指定生产线时的效率
+     * @param {*} productLine 生产线对象
+     */
+    getEfficiencyOfSource(productLine) {
+        var effficiencyOfProductionLine = productLine.getEfficiency(this.productStyleName);
+        if (effficiencyOfProductionLine == null) {
+            return null;
+        }
+        return this.efficiencyOfClass*effficiencyOfProductionLine;
+    }
+
+    // 获取自定义效率
+    get getEfficiencyOfSetting() {
+        if (this.efficiencyBySetting == null) {
+            return 0;
+        }
+        return this.efficiencyBySetting;
+    }
+
+    /**
+     * 用于计算公式时，所用到的真实效率
+     * @param {*} productLine 生产线对象
+     */
+    getEfficiency(productLine) {
+        // 优先选择自定效率
+        if (this.getEfficiencyOfSetting != 0) {
+            return this.getEfficiencyOfSetting;
+        } 
+        return this.getEfficiencyOfSource(productLine);
+    }
+
+    /**
+     * 获取日产
+     * @param {*} productLine 所在生产线对象
+     * @param {*} startTime 排产条开始时间
+     */
+    getDailyMaking(productLine, startTime) {
+        var efficiency = this.getEfficiencyOfSource(productLine);
+        if (efficiency == null) {
+            return null;
+        }
+        var peopleNum = productLine.getPeopleNumByDate(startTime);
+        var workHours = productLine.getWorkHoursByDate(startTime);
+        return (peopleNum * workHours * efficiency * 60)/this.sam;
+    }
+
+    /**
+     * 获取自选日产
+     * @param {*} startTime 开始时间 
+     */
+    getDailyMakingOfSetting(productLine, startTime) {
+        var efficiency = this.getEfficiencyOfSetting;
+        var peopleNum = productLine.getPeopleNumByDate(startTime);
+        var workHours = productLine.getWorkHoursByDate(startTime);
+        return (peopleNum * workHours * efficiency * 60)/this.sam;
     }
 
     // 获取开启时间
@@ -98,6 +172,25 @@ export default class ProgressBar {
         }
         return dayCount;
     }
+    
+    /**
+     * 设置原拆单的进度条 ID
+     * @param {*} parentId 
+     */
+    setParentId(parentId) {
+        this.parentId = parentId;
+    }
+
+    /**
+     * 重设计划数量
+     * @param {*} productLine 
+     * @param {*} factoryCalendar 
+     * @param {*} qtyofbatcheddelivery 
+     */
+    setQtyofbatcheddelivery(productLine, factoryCalendar, qtyofbatcheddelivery) {
+        this.qtyofbatcheddelivery = qtyofbatcheddelivery;
+        this.setEndTime(productLine, factoryCalendar, this.startTime);
+    }
 
     /**
      * 重置进度条的生产线、工厂日历属性、开始时间，从而更新数据
@@ -119,15 +212,15 @@ export default class ProgressBar {
      * @param {*} startTime 
      */
     setEndTime(productLine, factoryCalendar, startTime) {
-        var effficiencyOfProductionLine = productLine.getEfficiency(this.productStyleName);
-        if (effficiencyOfProductionLine == null) {
+        var efficiency = this.getEfficiency(productLine);
+        if (efficiency == null) {
             return null;
         }
         var peopleNum = productLine.getPeopleNumByDate(startTime);
         var workHours = productLine.getWorkHoursByDate(startTime);
         // 需要天数
-        var dayCount = (this.efficiencyOfClass*((this.qtyofbatcheddelivery - this.qtyFinish)*this.sam/60)*effficiencyOfProductionLine)/(peopleNum*workHours);
-        console.log("(" + this.efficiencyOfClass + "*((" + this.qtyofbatcheddelivery + "-" + this.qtyFinish + ")*" + this.sam + "/60)*" + effficiencyOfProductionLine + ")/(" + peopleNum + "*" + workHours + ") = " + dayCount);
+        var dayCount = ((this.qtyofbatcheddelivery - this.qtyFinish)*this.sam/60)/(efficiency*peopleNum*workHours);
+        console.log("((" + this.qtyofbatcheddelivery + "-" + this.qtyFinish + ")*" + this.sam + "/60)/(" + efficiency + "*" + peopleNum + "*" + workHours + ") = " + dayCount);
         // 结合节假日，设置结束时间
         var endTime = startTime + Math.ceil(dayCount*DateUtil.timeStampOfOneDay);
         endTime = factoryCalendar.getEndTime(startTime, endTime);
@@ -190,6 +283,7 @@ export default class ProgressBar {
         msgOfProgressBar.qtyofbatcheddelivery = this.qtyofbatcheddelivery; // 计划数量
         msgOfProgressBar.startTime = this.startTime; // 开始时间
         msgOfProgressBar.endTime = this.endTime; // 结束时间
+        msgOfProgressBar.efficiencyBySetting = this.efficiencyBySetting; // 自定义效率
         var progressBar = new ProgressBar(
             that.productLineIndex,
             that.productionLineId,
@@ -201,9 +295,10 @@ export default class ProgressBar {
     /**
      * 在画布中渲染进度条
      * @param {*} ctx 画布的上下文
+     * @param {*} colorSetting 颜色设置
      * @param {*} isHeigher 是否需要上移
      */
-    render(ctx, isHeigher) {
+    render(ctx, colorSetting, isHeigher) {
         ctx.save();
         var msgOfCSS = this.msgOfCSS;
         ctx.lineWidth = CONST.STYLEOFPROGRESSBAR.lineWidth; //设置线的宽度
@@ -233,11 +328,15 @@ export default class ProgressBar {
         // 渲染白色背景
         ctx.fillStyle = "#fff";
         ctx.fillRect(0, 0, width, CONST.STYLEOFPROGRESSBAR.height);
-        // 渲染百分比
+        // 渲染百分比进度条
         ctx.fillStyle = "#ddd";
-        ctx.fillRect(0, CONST.STYLEOFPROGRESSBAR.height/2 - 0.5, width, CONST.STYLEOFPROGRESSBAR.height/2);
+        ctx.fillRect(0.5, CONST.STYLEOFPROGRESSBAR.height/2 - 0.5, width-1, CONST.STYLEOFPROGRESSBAR.height/2);
         ctx.fillStyle = "#3bbf67";
-        ctx.fillRect(0, CONST.STYLEOFPROGRESSBAR.height/2 - 0.5, width*this.getPercentOfQuantityOfWork, CONST.STYLEOFPROGRESSBAR.height/2);
+        ctx.fillRect(0.5, CONST.STYLEOFPROGRESSBAR.height/2 - 0.5, width*this.getPercentOfQuantityOfWork-1, CONST.STYLEOFPROGRESSBAR.height/2);
+        // 渲染颜色设置
+        ctx.fillStyle = colorSetting.getColor(this.dayNumOfRemain);
+        ctx.fillRect(0.5, CONST.STYLEOFPROGRESSBAR.height - 2*CONST.STYLEOFPROGRESSBAR.lineWidth,  width-1, CONST.STYLEOFPROGRESSBAR.lineWidth*2);
+        // 渲染百分比文本
         ctx.fillStyle = "#fff";
         ctx.font =  CONST.STYLEOFPROGRESSBAR.fontStyle;
         ctx.textBaseline = "top";

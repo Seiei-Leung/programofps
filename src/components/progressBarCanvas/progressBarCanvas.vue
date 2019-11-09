@@ -43,7 +43,7 @@ export default {
             ctxOfTemp: null, // 移动画布的上下文
             beforeProductLineIndex: null, // 激活进度条的原来生产线的索引
             afterProductLineIndex: null, // 激活进度条移动后的生产线索引
-            
+            colorSetting: null, // 颜色设置
         }
     },
     computed: {
@@ -52,7 +52,7 @@ export default {
             return {
                 width: this.dayCountOfShow * (CONST.STYLEOFCELL.width + 2*CONST.STYLEOFCELL.lineWidth),
                 height: this.productLineList.length * (CONST.STYLEOFCELL.height + 2*CONST.STYLEOFCELL.lineWidth) + CONST.STYLEOFCELL.lineWidth,
-                top: CONST.STYLEOFPRODUCTLINESBAR.height + CONST.STYLEOFTOOLBAR.height - CONST.STYLEOFPRODUCTLINESBAR.lineWidth - CONST.STYLEOFTOOLBAR.lineWidth,
+                top: CONST.STYLEOFPRODUCTLINESBAR.height + CONST.STYLEOFTOOLBAR.height - CONST.STYLEOFPRODUCTLINESBAR.lineWidth,
                 left: CONST.STYLEOFPRODUCTLINESBAR.width - CONST.STYLEOFPRODUCTLINESBAR.lineWidth
             }
         },
@@ -75,11 +75,12 @@ export default {
         this.$store.commit('setCtxOfTemp', ctxOfTemp);
         this.ctxOfTemp = ctxOfTemp;
         this.productLineList.forEach((item) => {
-            item.renderWithOutIdList(this.ctxOfSource, null);
+            item.renderWithOutIdList(this.ctxOfSource, this.colorSetting, null);
         });
     },
     created: function() {
         this.factoryCalendar = this.$store.state.factoryCalendarObj;
+        this.colorSetting = this.$store.state.colorSetting;
     },
     methods: {
         /*
@@ -98,10 +99,10 @@ export default {
 
             // 清除源画布
             this.productLineList[progressBar.getProductLineIndex].clear(this.ctxOfSource);
-            this.productLineList[progressBar.getProductLineIndex].renderWithOutIdList(this.ctxOfSource, [progressBar.getId]);
+            this.productLineList[progressBar.getProductLineIndex].renderWithOutIdList(this.ctxOfSource, this.colorSetting, [progressBar.getId]);
 
             // 渲染移动画布
-            progressBar.render(this.ctxOfTemp, false);
+            progressBar.render(this.ctxOfTemp, this.colorSetting, false);
             this.$store.commit("setActivedProgressBar", progressBar);
         },
         // 在源数据画布移动
@@ -218,7 +219,7 @@ export default {
                 if (beforeProductLine) {
                     // 该排产计划已经排产，则恢复旧生产线数据渲染
                     beforeProductLine.clear(this.ctxOfSource);
-                    beforeProductLine.renderWithOutIdList(this.ctxOfSource, null);
+                    beforeProductLine.renderWithOutIdList(this.ctxOfSource, this.colorSetting, null);
                 }
                 return;
             }
@@ -278,7 +279,7 @@ export default {
              */
             activedProductLine.clear(this.ctxOfSource); // 清空图层
             var activedProgressIndex = activedProductLine.addProgress(activedProgressBar, this.factoryCalendar); // 激活生产线添加进度条
-            activedProductLine.renderWithOutIdList(this.ctxOfSource, null); // 渲染生产线
+            activedProductLine.renderWithOutIdList(this.ctxOfSource, this.colorSetting, null); // 渲染生产线
 
             /**
              * 记录历史操作
@@ -340,10 +341,22 @@ export default {
                 return;
             }
             this.$store.commit("setActivedProgressBar", progressBar);
+            
+            // 调整位置
+            var left = e.clientX;
+            var top = e.clientY;
+            if (e.clientX + CONST.STYLEOFMENU.width > window.innerWidth) {
+                left = e.clientX - CONST.STYLEOFMENU.width;
+            }
+            if (e.clientY + CONST.STYLEOFMENU.height > window.innerHeight) {
+                top = e.clientY - CONST.STYLEOFMENU.height;
+            }
+
             // 设置窗口位置
             var obj = {
-                left: e.clientX + "px",
-                top: e.clientY + "px"
+                left: left + "px",
+                top: top + "px",
+                width: CONST.STYLEOFMENU.width + "px"
             }
             this.$store.commit("setMsgOfWindowOfMenu", obj);
             this.$store.commit("closeAllWindow");

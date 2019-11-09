@@ -7,7 +7,7 @@
             </div>
             <div class="productLinesHook" v-bind:style="styleOfProductLinesHook">
                 <div class="productLine" v-for="(item, index) in productLineList" v-bind:key="index">
-                    {{item.fullName}}
+                    {{item.fullName}}（{{item.getDefaultStyleName}}）
                 </div>
             </div>
         </div>
@@ -41,16 +41,12 @@ export default {
         },
         styleOfProductLinesHook: function() {
             return {
-                marginTop: CONST.STYLEOFPRODUCTLINESBAR.height + "px"
+                marginTop: CONST.STYLEOFPRODUCTLINESBAR.height + "px",
+                borderTop: "1px solid #ddd"
             }
         },
         productLineList: function() {
             return this.$store.state.productLineList;
-        }
-    },
-    watch: {
-        "scrollDirection": function() {
-            console.log(345)
         }
     },
     created: function() {
