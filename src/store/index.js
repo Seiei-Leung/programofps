@@ -54,6 +54,7 @@ export default new Vuex.Store({
 		isShowWindowOfMinus: false, // 是否显示减数窗口
 		isShowWindowOfDetail: false, // 是否显示详情窗口
 		isShowWindowOfSeparateBill: false, // 是否显示拆单窗口
+		isShowWindowOfSettingEfficiency: false, // 是否显示自定效率
 		isShowBackgroundForDrawWindow: false, // 是否显示拖动图层
 		domOfDragWindow: null, // 拖动窗口的 dom
 	},
@@ -258,6 +259,10 @@ export default new Vuex.Store({
 		setIsShowBackgroundForDrawWindow(state, data) {
 			state.isShowBackgroundForDrawWindow = data;
 		},
+		// 切换显示自定义效率图层
+		setIsShowWindowOfSettingEfficiency(state, data) {
+			state.isShowWindowOfSettingEfficiency = data;
+		},
 		// 设置 拖动窗口 dom
 		setDomOfDragWindow(state, data) {
 			state.domOfDragWindow = data;
@@ -269,6 +274,7 @@ export default new Vuex.Store({
 			state.isShowWindowOfMinus = false;
 			state.isShowWindowOfDetail = false;
 			state.isShowWindowOfSeparateBill = false;
+			state.setIsShowWindowOfSettingEfficiency = false;
 		}
 	}
 })

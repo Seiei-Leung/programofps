@@ -10,13 +10,13 @@
             <div class="item" @click="showWindowOfSeparateBill">
                 拆单
             </div>
-            <div class="item" @click="showWindowOfSeparateBill">
-                拆单
+            <div class="item">
+                锁定
             </div>
             <div class="item" @click="showDeleteModel">
                 删除
             </div>
-            <div class="item">
+            <div class="item" @click="showWindowOfSettingEfficiency">
                 自选效率
             </div>
             <div class="item" @click="showRemoveGapModel">
@@ -50,7 +50,6 @@ export default {
             isShowDeleteModel: false, // 是否显示删除窗口
             isShowRemoveGapModel: false, // 是否显示
             factoryCalendar: null, // 工厂日历
-            ctxOfSource: null, // 源画布
             colorSetting: null, // 颜色设置
         }
     },
@@ -67,6 +66,10 @@ export default {
         productLineList: function() {
             return this.$store.state.productLineList;
         },
+        // 源画布
+        ctxOfSource: function() {
+            return this.$store.state.ctxOfSource;
+        }
     },
     methods: {
         // 显示减数窗口
@@ -101,6 +104,11 @@ export default {
         // 隐藏消除时间空隙对话框
         hideRemoveGapModel: function() {
             this.isShowRemoveGapModel = false;
+        },
+        // 显示自选效率窗口
+        showWindowOfSettingEfficiency: function() {
+            this.$store.commit("closeAllWindow");
+            this.$store.commit("setIsShowWindowOfSettingEfficiency", true);
         },
         // 确认输出排产进度条
         deleteProgress: function() {
@@ -160,13 +168,11 @@ export default {
                 );
                 this.$store.commit("pushHistoryObjList", historyObj);
             }
-
             // 消除间隙操作
             for (var i=activedProgressBarIndex+1; i<progressList.length; i++) {
-                console.log(i);
-                console.log(progressList[i-1].getEndTime + "<" + productLineList[i].getStartTime);
                 // 如果没有重叠
-                if (progressList[i-1].getEndTime < productLineList[i].getStartTime) {
+                if (progressList[i-1].getEndTime < progressList[i].getStartTime) {
+                    
                     progressList[i].reload(activedProductLine, this.factoryCalendar, progressList[i-1].getEndTime); // 消除间隙
                 }
             }
@@ -201,7 +207,6 @@ export default {
     },
     created: function() {
         this.factoryCalendar = this.$store.state.factoryCalendarObj;
-        this.ctxOfSource = this.$store.state.ctxOfSource;
         this.colorSetting = this.$store.state.colorSetting;
     }
 }

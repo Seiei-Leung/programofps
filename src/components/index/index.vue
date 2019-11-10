@@ -15,13 +15,15 @@
         <!-- 提示组件 -->
         <v-toast v-show="isShowToast" v-bind:txt="toastTxt"></v-toast>
         <!-- 鼠标右击进度条显示菜单 -->
-        <v-windowOfMenu v-show="isShowWindowOfMenu"></v-windowOfMenu>
+        <v-windowOfMenu v-if="isDone" v-show="isShowWindowOfMenu"></v-windowOfMenu>
         <!-- 减数窗口 -->
         <v-windowOfMinus v-if="isShowWindowOfMinus"></v-windowOfMinus>
         <!-- 详情窗口 -->
         <v-windowOfDetail v-if="isShowWindowOfDetail"></v-windowOfDetail>
         <!-- 拆单窗口 -->
         <v-windowOfSeparateBill v-if="isShowWindowOfSeparateBill"></v-windowOfSeparateBill>
+        <!-- 自选效率窗口 -->
+        <v-windowOfSettingEfficiency v-if="isShowWindowOfSettingEfficiency"></v-windowOfSettingEfficiency>
         <!-- 拖动窗口图层 -->
         <v-backgroundForDrawWindow v-if="isShowBackgroundForDrawWindow"></v-backgroundForDrawWindow>
         <!-- loading 组件 -->
@@ -47,6 +49,7 @@ import windowOfMenu from "../windowOfMenu/windowOfMenu";
 import windowOfMinus from "../windowOfMinus/windowOfMinus";
 import windowOfDetail from "../windowOfDetail/windowOfDetail";
 import windowOfSeparateBill from "../windowOfSeparateBill/windowOfSeparateBill";
+import windowOfSettingEfficiency from "../windowOfSettingEfficiency/windowOfSettingEfficiency";
 import backgroundForDrawWindow from "../backgroundForDrawWindow/backgroundForDrawWindow";
 import ScrollUtil from "../../common/scrollUtil";
 import ColorSetting from "../../vo/colorSetting";
@@ -85,6 +88,10 @@ export default {
         // 是否显示详情窗口
         isShowWindowOfDetail: function() {
             return this.$store.state.isShowWindowOfDetail;
+        },
+        // 是否显示自选效率窗口
+        isShowWindowOfSettingEfficiency: function() {
+            return this.$store.state.isShowWindowOfSettingEfficiency;
         },
         // 是否显示拖动图层
         isShowBackgroundForDrawWindow: function() {
@@ -169,7 +176,6 @@ export default {
                     // 保存到 vuex 中
                     that.$store.commit('setFactoryCalendarObj', factoryCalendar);
                     that.getMsgOfProductLine();
-
                 }
             }).catch((error) => {
                 that.$store.commit("setIsLoading", false);
@@ -249,6 +255,7 @@ export default {
         "v-windowOfMinus": windowOfMinus,
         "v-windowOfDetail": windowOfDetail,
         "v-windowOfSeparateBill": windowOfSeparateBill,
+        "v-windowOfSettingEfficiency": windowOfSettingEfficiency,
         "v-backgroundForDrawWindow": backgroundForDrawWindow,
     }
 }

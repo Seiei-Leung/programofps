@@ -36,7 +36,7 @@
                     拆单数量
                 </div>
                 <div class="txt">
-                    <InputNumber v-bind:max="activedProgressBar.getQtyofbatcheddelivery - activedProgressBar.getQtyFinish" :min="0" v-model="numOfSeparateBill"></InputNumber>
+                    <InputNumber :max="activedProgressBar.getQtyofbatcheddelivery - activedProgressBar.getQtyFinish" :min="0" v-model="numOfSeparateBill"></InputNumber>
                 </div>
             </div>
             <div class="item">

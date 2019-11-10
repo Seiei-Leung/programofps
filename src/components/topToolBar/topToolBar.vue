@@ -116,6 +116,7 @@ export default {
                         obj.qtyofbatcheddelivery = progressBar.getQtyofbatcheddelivery; // 更新计划数量
                         obj.startTime = progressBar.getStartTime; // 更新开始时间
                         obj.endTime = progressBar.getEndTime; // 更新结束时间
+                        obj.efficiencyOfSetting = progressBar.getEfficiencyOfSetting; // 更新自选效率
                         // 对因拆单而新增的排产进度条，从而赋值原拆单的进度条 ID
                         if (progressBar.getParentId) {
                             obj.parentId = progressBar.getParentId;

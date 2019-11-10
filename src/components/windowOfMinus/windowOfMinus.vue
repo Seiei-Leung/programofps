@@ -44,7 +44,7 @@
                     已完成数
                 </div>
                 <div class="txt">
-                    <InputNumber v-bind:max="activedProgressBar.getQtyofbatcheddelivery" :min="0" v-model="numOfDone"></InputNumber>
+                    <InputNumber :max="activedProgressBar.getQtyofbatcheddelivery" :min="0" v-model="numOfDone"></InputNumber>
                 </div>
             </div>
             <div class="btn" @click="minus">

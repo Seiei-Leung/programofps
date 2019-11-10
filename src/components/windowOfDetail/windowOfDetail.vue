@@ -211,6 +211,7 @@ export default {
     box-sizing: border-box;
     padding-left: 1em;
     width: 70%;
+    height: 30px;
     font-size: 20px;
     vertical-align: top;
     border-left: 1px solid #93c8ff;

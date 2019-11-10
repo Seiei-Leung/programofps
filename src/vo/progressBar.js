@@ -74,7 +74,7 @@ export default class ProgressBar {
         return this.efficiencyOfClass*effficiencyOfProductionLine;
     }
 
-    // 获取自定义效率
+    // 获取自选效率
     get getEfficiencyOfSetting() {
         if (this.efficiencyBySetting == null) {
             return 0;
@@ -83,11 +83,19 @@ export default class ProgressBar {
     }
 
     /**
+     * 设置自选效率
+     * @param {*} efficiencyOfSetting 
+     */
+    setEfficiencyOfSetting(efficiencyOfSetting) {
+        this.efficiencyBySetting = efficiencyOfSetting;
+    }
+
+    /**
      * 用于计算公式时，所用到的真实效率
      * @param {*} productLine 生产线对象
      */
     getEfficiency(productLine) {
-        // 优先选择自定效率
+        // 优先选择自选效率
         if (this.getEfficiencyOfSetting != 0) {
             return this.getEfficiencyOfSetting;
         } 
@@ -283,7 +291,7 @@ export default class ProgressBar {
         msgOfProgressBar.qtyofbatcheddelivery = this.qtyofbatcheddelivery; // 计划数量
         msgOfProgressBar.startTime = this.startTime; // 开始时间
         msgOfProgressBar.endTime = this.endTime; // 结束时间
-        msgOfProgressBar.efficiencyBySetting = this.efficiencyBySetting; // 自定义效率
+        msgOfProgressBar.efficiencyBySetting = this.efficiencyBySetting; // 自选效率
         var progressBar = new ProgressBar(
             that.productLineIndex,
             that.productionLineId,

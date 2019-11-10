@@ -374,11 +374,9 @@ export default {
 .progressBarCanvas-component {
     position: absolute;
 }
-.sourceCanvas {
-
-}
 .tempCanvas {
     position: absolute;
     top: 0;
+    left: 0;
 }
 </style>

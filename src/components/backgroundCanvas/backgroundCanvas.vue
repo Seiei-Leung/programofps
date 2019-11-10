@@ -96,9 +96,11 @@ export default {
 .backgroundOfPeople {
     position: absolute;
     top: 0;
+    left: 0;
 }
 .backgroundOfHours {
     position: absolute;
     top: 0;
+    left: 0;
 }
 </style>
