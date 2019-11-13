@@ -10,9 +10,6 @@
             <div class="item" @click="showWindowOfSeparateBill">
                 拆单
             </div>
-            <div class="item">
-                锁定
-            </div>
             <div class="item" @click="showDeleteModel">
                 删除
             </div>
@@ -21,6 +18,12 @@
             </div>
             <div class="item" @click="showRemoveGapModel">
                 消除时间间隙
+            </div>
+            <div class="item" @click="lockProductLine">
+                锁定该生产线
+            </div>
+            <div class="item" @click="unlockProductLine">
+                解锁之后计划
             </div>
         </div>
         <Modal
@@ -203,7 +206,34 @@ export default {
 
             // 隐藏对话框
             this.isShowRemoveGapModel = false;
+        },
+        // 锁定所有生产线
+        lockProductLine: function() {
+            var productLineList = this.productLineList;
+            var activedProgressBar = this.activedProgressBar;
+            var activedProductLine = productLineList[activedProgressBar.getProductLineIndex];
+            activedProductLine.lock(); // 上锁
+            activedProductLine.clear(this.ctxOfSource);
+            activedProductLine.renderWithOutIdList(this.ctxOfSource, this.colorSetting, null);
+            this.$store.commit("setIsShowWindowOfMenu", false);
+        },
+        // 解锁生产线
+        unlockProductLine: function() {
+            var productLineList = this.productLineList;
+            var activedProgressBar = this.activedProgressBar;
+            var activedProductLine = productLineList[activedProgressBar.getProductLineIndex];
+            var activedProgressBarIndex = activedProductLine.getProgressIndexById(activedProgressBar.getId);
+            // 如果解锁的排产计划是该生产线中的第一条，则表示解锁整条生产线
+            if (activedProgressBarIndex == 0) {
+                activedProductLine.unLock(CONST.STATUSOFLOCK.UNLOCK);
+            } else {
+                activedProductLine.unLock(activedProductLine.getProgressList[activedProgressBarIndex - 1].getId);
+            }
+            activedProductLine.clear(this.ctxOfSource);
+            activedProductLine.renderWithOutIdList(this.ctxOfSource, this.colorSetting, null);
+            this.$store.commit("setIsShowWindowOfMenu", false);
         }
+
     },
     created: function() {
         this.factoryCalendar = this.$store.state.factoryCalendarObj;

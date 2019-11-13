@@ -18,9 +18,10 @@ export default class ProductLine {
         this.workhoursOfLineList = workhoursOfLineList; // 工作时间列表
         this.efficiencyOfLineList = efficiencyOfLineList; // 效率列表
         this.progressList = []; // 该生产线的排产进度条列表
+        this.idOfLock = CONST.STATUSOFLOCK.LOCK; // 加锁时间，为 -2 时全部上锁，为 -1 时全部解锁，其它为时间戳
     }
 
-    // 获取主键
+    // 获取主键 
     get getId() {
         return this.id;
     }
@@ -131,9 +132,10 @@ export default class ProductLine {
      * @param {*} id 
      */
     getProgressById(id) {
-        this.progressList.find((item) => {
+        var index = this.progressList.findIndex((item) => {
             return item.id == id;
-        })
+        });
+        return this.progressList[index];
     }
 
     /**
@@ -159,6 +161,32 @@ export default class ProductLine {
         }
         this.progressList.splice(index, 1);
     }
+
+    /**
+     * 修正插入计划时，开始时间可能引起的 bug
+     * (比如有些计划的长度不足一天)
+     * @param {*} timeStamp 
+     */
+    ractifyStartTime(timeStamp) {
+        var startTime = timeStamp;
+        var progressList = this.getProgressList;
+        for (var progressIndex=0; progressIndex<progressList.length; progressIndex++) {
+            // 发生重叠
+            if (progressList[progressIndex].getStartTime <= timeStamp && progressList[progressIndex].getEndTime >= timeStamp) {
+                // 发生重叠的计划的结束日期向后取整
+                var endTimeAddOneDay = DateUtil.strToTimeStamp(DateUtil.timeStampToDate(progressList[progressIndex].getEndTime)) + DateUtil.timeStampOfOneDay;
+                // 检测是否有时长不足一天的计划，如果有则开始时间取不足计划的结束时间
+                for (var progressIndex2=progressIndex+1; progressIndex2<progressList.length; progressIndex2++) {
+                    if (progressList[progressIndex2].getStartTime >= progressList[progressIndex].getEndTime && progressList[progressIndex2].getEndTime <= endTimeAddOneDay) {
+                        startTime = progressList[progressIndex2].getEndTime;
+                    }
+                }
+                break;
+            }
+        }
+        return startTime;
+    }
+
 
     /**
      * 添加新排产进度条到列表，返回新增排产计划所在的索引
@@ -188,32 +216,20 @@ export default class ProductLine {
                     // 循环索引 +1
                     progressBarIndex += 1;
                     // 重置插入进度条的开启时间等信息
-                    // 特殊情况，比如
-                    // 新增的进度条的开始时间 **初始默认** 为 2019-11-4，
-                    // 而现有两条进度条，进度条 a 结束时间为 2019-11-4 12:00:00，进度条 b 紧接进度条 a，且结束时间为 2019-11-4 15:00:00
-                    // 这样按照正常情况下，新增的进度条开始时间应该改为 2019-11-4 15:00:00，而不是 2019-11-4 12:00:00，导致进度条 b 后移
-                    // console.log(progressBarLocal.getEndTime + ">" + DateUtil.strToTimeStamp(DateUtil.timeStampToDate(progressBarLocal.getEndTime)));
-                    // console.log(this.progressList[progressBarIndex].getEndTime + "<" + (DateUtil.strToTimeStamp(DateUtil.timeStampToDate(progressBarLocal.getEndTime)) + DateUtil.timeStampOfOneDay))
-                    if (this.progressList[progressBarIndex]
-                        && progressBarLocal.getEndTime >= DateUtil.strToTimeStamp(DateUtil.timeStampToDate(progressBarLocal.getEndTime))
-                        && this.progressList[progressBarIndex].getEndTime <= (DateUtil.strToTimeStamp(DateUtil.timeStampToDate(progressBarLocal.getEndTime)) + DateUtil.timeStampOfOneDay)
-                        ) 
-                    {
-                        for (var progressBarIndexTemp=progressBarIndex; progressBarIndexTemp<this.progressList.length; progressBarIndexTemp++) {
-                            if (this.progressList[progressBarIndexTemp].getEndTime <= (DateUtil.strToTimeStamp(DateUtil.timeStampToDate(progressBarLocal.getEndTime)) + DateUtil.timeStampOfOneDay)) {
-                                // 重置插入进度条的开启时间等信息
-                                progressBarOfInsert.reload(this, factoryCalendar, this.progressList[progressBarIndexTemp].getEndTime);
-                                progressBarIndex += 1;
-                            }
-                        }
-                    } else {
-                        // 重置插入进度条的开启时间等信息
-                        progressBarOfInsert.reload(this, factoryCalendar, progressBarLocal.getEndTime);
-                    }
+                    progressBarOfInsert.reload(this, factoryCalendar, progressBarLocal.getEndTime);
                     // 插入数据
                     this.progressList.splice(progressBarIndex, 0, progressBarOfInsert);
+
+                    // 如果源生产线数据中，本地计划的结束时间比后面的一些计划的结束时间要靠前
+                    // 则将在下一次的循环中忽略它
+                    for (var progressBarIndex2=progressBarIndex+1; progressBarIndex2<this.progressList.length; progressBarIndex2++) {
+                        if (this.progressList[progressBarIndex2].getEndTime <= progressBarLocal.getEndTime) {
+                            progressBarIndex += 1;
+                        }
+                    }
                     isInserted = true; //更新为已插入
                     progressBarLocal = progressBarOfInsert; // 重置本地生产线用于比较的进度条
+                    
                 }
                 // 新增的进度条的 **结束时间 ** 与本地进度条的发生重叠
                 else if (relationOfInsert == "CLASH_ENDTIME") {
@@ -244,7 +260,6 @@ export default class ProductLine {
                 }
                 // 发生重叠
                 else {
-                    // console.log(relation);
                     // 更新发生重叠的数据
                     progressBarOfCompare.reload(this, factoryCalendar, progressBarLocal.getEndTime);
                     progressBarLocal = progressBarOfCompare; // 重置本地生产线用于比较的进度条
@@ -258,6 +273,8 @@ export default class ProductLine {
             // 插入数据
             this.progressList.splice(progressBarIndexOfReset, 0, progressBarOfInsert);
         }
+        // 重新排序计划列表
+        this.sortProgressList();
         return this.getProgressIndexById(progressBarOfInsert.getId) + "";
     }
 
@@ -269,7 +286,7 @@ export default class ProductLine {
     addProgressInTheEnd(progressBarOfInsert, factoryCalendar) {
         // 检查该生产线是否有排产进度列表，如果为空，则插入的生产线的开始时间默认为今天的 0点0分0秒
         if (this.progressList.length == 0) {
-            var now = DateUtil.getTimeStampOfToday;
+            var now = DateUtil.getTimeStampOfToday();
             progressBarOfInsert.reload(this, factoryCalendar, now);
             this.progressList.push(progressBarOfInsert);
             return;
@@ -300,24 +317,43 @@ export default class ProductLine {
      * @param {*} idList 无需渲染的id列表
      */
     renderWithOutIdList(ctx, colorSetting, idList) {
+        var isLock = null; // 是否上锁
+        // 整条生产线都上锁
+        if (this.idOfLock == CONST.STATUSOFLOCK.LOCK) {
+            isLock = true;
+        }
+        // 整条生产线都解锁
+        if (this.idOfLock == CONST.STATUSOFLOCK.UNLOCK) {
+            isLock = false;
+        }
         if (idList == null) {
             for (var i=0; i<this.progressList.length; i++) {
+                // 如果锁的状态
+                if (this.idOfLock > 0) {
+                    var indexOfLock = this.getProgressIndexById(this.idOfLock); // 解锁索引
+                    isLock = i > indexOfLock ? false : true;
+                }
                 // 是否发生重叠
                 if (this.progressList[i+1] != null && this.progressList[i].getEndTime > this.progressList[i+1].getStartTime) {
-                    this.progressList[i].render(ctx, colorSetting, true);
+                    this.progressList[i].render(ctx, colorSetting, true, isLock);
                 } else {
-                    this.progressList[i].render(ctx, colorSetting, false);
+                    this.progressList[i].render(ctx, colorSetting, false, isLock);
                 }
             }
         } else {
             for (var i=0; i<this.progressList.length; i++) {
                 // 是否在排除 id 的列表中
                 if (idList.indexOf(this.progressList[i].id) == -1) {
+                    // 如果锁的状态
+                    if (this.idOfLock > 0) {
+                        var indexOfLock = this.getProgressIndexById(this.idOfLock); // 解锁索引
+                        isLock = i > indexOfLock ? false : true;
+                    }
                     // 是否发生了重叠
                     if (this.progressList[i+1] != null && this.progressList[i].getEndTime > this.progressList[i+1].getStartTime) {
-                        this.progressList[i].render(ctx, colorSetting, true);
+                        this.progressList[i].render(ctx, colorSetting, true, isLock);
                     } else {
-                        this.progressList[i].render(ctx, colorSetting, false);
+                        this.progressList[i].render(ctx, colorSetting, false, isLock);
                     }
                 }
             }
@@ -346,10 +382,34 @@ export default class ProductLine {
             that.workhoursOfLineList,
             that.efficiencyOfLineList
         );
+        productionLine.unLock(this.idOfLock);
         productionLine.setProgressList(progressList);
         return productionLine;
     }
 
+    // 获取上锁时间戳
+    get getIdOfLock() {
+        return this.idOfLock;
+    }
 
+    /**
+     * 设置上锁时间戳
+     * @param {*} idOfLock 
+     */
+    unLock(idOfLock) {
+        this.idOfLock = idOfLock;
+    }
 
+    // 全部上锁
+    lock() {
+        this.idOfLock = CONST.STATUSOFLOCK.LOCK;
+    }
+    
+    // 根据开始时间排序 计划列表
+    sortProgressList() {
+        var progressList = this.progressList.sort((a, b) => {
+            return a.getStartTime - b.getStartTime;
+        });
+        this.progressList = progressList;
+    }
 }

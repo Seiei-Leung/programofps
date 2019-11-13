@@ -97,7 +97,7 @@
             </div>
             <div class="item">
                 <div class="title">
-                    效率日产
+                    自选日产
                 </div>
                 <div class="txt">
                     {{Math.floor(activedProgressBar.getDailyMakingOfSetting(activedProductLine, activedProgressBar.getStartTime))}}

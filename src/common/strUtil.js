@@ -18,7 +18,7 @@ export default class StrUtil {
      * @param {*} decimal 小数
      */
     static decimalToPercent(decimal) {
-        return (decimal*100).toFixed(0) + "%";
+        return Math.floor(decimal*100) + "%";
     }
 
 }

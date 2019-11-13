@@ -61,9 +61,15 @@ export default class Const {
     static get STYLEOFMENU() {
         return {
             width: 150,
-            height: 65
+            height: 170
         }
     }
 
-
+    // 排产进度上锁状态
+    static get STATUSOFLOCK() {
+        return {
+            LOCK: -1,
+            UNLOCK: -2
+        }
+    }
 }

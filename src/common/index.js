@@ -1,13 +1,12 @@
 import DateUtil from "../common/dateUtil";
 
 // 注册自定义插件
-// seieiURL: "http://www.etscn.com.cn:58080/SaasapsBackEnd/api/",
-// seieiURL: "http://localhost:8080/api/",
 export default{
 	install: function(Vue, opt) {
 		Vue.mixin({
 			data: function() {
 				return {
+					// seieiURL: "http://www.etscn.com.cn:58080/SaasapsBackEnd/api/",
 					seieiURL: "http://localhost:8080/api/",
 				}
 			},

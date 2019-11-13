@@ -10,7 +10,7 @@ export default class DateUtil {
         var monthOfPrevious = now.getMonth() == 0 ? 12 : now.getMonth(); // 当前时间的上一个月的月份
         monthOfPrevious = DateUtil.zeroFillOfMonthOrDay(monthOfPrevious);
         var dayCountOfShow = DateUtil.getDayCountOfMonth(yearOfPrevious, monthOfPrevious);
-        return DateUtil.strToTimeStamp(yearOfPrevious + "-" + monthOfPrevious + "-01"); 
+        return DateUtil.strToTimeStamp(yearOfPrevious + "-" + monthOfPrevious + "-01");
     }
 
     // 用于日期栏显示

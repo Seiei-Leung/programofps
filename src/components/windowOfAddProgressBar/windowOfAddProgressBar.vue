@@ -44,6 +44,16 @@ export default {
                 	align: "center"
 				},
 				{
+                	title: '产品分类',
+                	key: 'style',
+                	align: "center"
+				},
+				{
+                	title: '款式分类',
+                	key: 'productStyleName',
+                	align: "center"
+				},
+				{
                 	title: '计划数量',
                 	key: 'qtyofbatcheddelivery',
                 	align: "center",
@@ -144,7 +154,7 @@ export default {
 	right: 0;
 	top: 0;
 	bottom: 0;
-	left: 70%;
+	left: 55%;
 	background-color: #fff;
 	border:2px solid #1b72ce;
 }

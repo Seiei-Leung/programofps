@@ -89,21 +89,44 @@ export default {
         // 在源数据画布中点击
         dblclickOfSourceCanvas: function(e) {
             // 获取当前激活的进度条
-            var progressBar =this.getProgressBarByXY(e);
-            if (progressBar == null) {
+            var activedProgressBar =this.getProgressBarByXY(e);
+            if (activedProgressBar == null) {
                 return;
             }
             
-            this.beforeProductLineIndex = progressBar.getProductLineIndex;
+            this.beforeProductLineIndex = activedProgressBar.getProductLineIndex;
+            var activedProductLine = this.productLineList[activedProgressBar.getProductLineIndex];
+
+            /**
+             * 检查是否上锁
+             */
+            var idOfLock = activedProductLine.getIdOfLock;
+            // 全部上锁
+            if (idOfLock == CONST.STATUSOFLOCK.LOCK) {
+                return;
+            }
+            // 未上锁
+            else if (idOfLock == CONST.STATUSOFLOCK.UNLOCK) {
+                // do nothing
+            }
+            // 部分上锁
+            else {
+                var progressBarOfLock = activedProductLine.getProgressById(idOfLock); // 上锁的进度条
+                // 排产进度比锁要前
+                if (progressBarOfLock.getStartTime >= activedProgressBar.getStartTime) {
+                   return; 
+                }
+            }
+            
             this.$store.commit("toggleIsShowCtxOfTmp");
 
             // 清除源画布
-            this.productLineList[progressBar.getProductLineIndex].clear(this.ctxOfSource);
-            this.productLineList[progressBar.getProductLineIndex].renderWithOutIdList(this.ctxOfSource, this.colorSetting, [progressBar.getId]);
+            activedProductLine.clear(this.ctxOfSource);
+            activedProductLine.renderWithOutIdList(this.ctxOfSource, this.colorSetting, [activedProgressBar.getId]);
 
             // 渲染移动画布
-            progressBar.render(this.ctxOfTemp, this.colorSetting, false);
-            this.$store.commit("setActivedProgressBar", progressBar);
+            activedProgressBar.render(this.ctxOfTemp, this.colorSetting, false, true);
+            this.$store.commit("setActivedProgressBar", activedProgressBar);
         },
         // 在源数据画布移动
         mousemoveOfSourceCavnas: function(e) {
@@ -197,11 +220,12 @@ export default {
             this.afterProductLineIndex = V2M.yToProductLineIndex(productLineList, y); // 移动后所在生产线的索引
             var activedProductLine = productLineList[this.afterProductLineIndex]; // 移动后所在的生产线
             var beforeProductLine = null; // 移动前所在的生产线
+
             // 如果不是新增的进度条，赋值 beforeProductLine
             if (activedProgressBar.getProductLineIndex != null) {
                 beforeProductLine = productLineList[this.beforeProductLineIndex]; // 赋值 beforeProductLine
             }
-            var startTimeStamp = V2M.xToTimeStamp(x); // 开启时间戳
+            var startTimeStamp = activedProductLine.ractifyStartTime(V2M.xToTimeStamp(x)); // 开启时间戳
             console.log("鼠标松开按键时的所在生产生产线：" + activedProductLine.fullName);
 
             /**
@@ -222,6 +246,52 @@ export default {
                     beforeProductLine.renderWithOutIdList(this.ctxOfSource, this.colorSetting, null);
                 }
                 return;
+            }
+
+            /**
+             * 检查上锁情况
+             */
+            var idOfLock = activedProductLine.getIdOfLock;
+            // 全部上锁
+            if (idOfLock == CONST.STATUSOFLOCK.LOCK) {
+                // 生产线为空
+                if (activedProductLine.getProgressList.length == 0) {
+                    activedProductLine.unLock(CONST.STATUSOFLOCK.UNLOCK);
+                }
+                // 不是新增到生产线的末端
+                else if (activedProductLine.getProgressList[activedProductLine.getProgressList.length - 1].getStartTime >= startTimeStamp) {
+                    this.showToast("该生产线尚未解锁");
+                    // 该排产计划已经排产，则恢复旧生产线数据渲染
+                    if (beforeProductLine) {
+                        // 该排产计划已经排产，则恢复旧生产线数据渲染
+                        beforeProductLine.clear(this.ctxOfSource);
+                        beforeProductLine.renderWithOutIdList(this.ctxOfSource, this.colorSetting, null);
+                    }
+                    return;
+                }
+                // 新增到生产线的末端
+                else {
+                    activedProductLine.unLock(activedProductLine.getProgressList[activedProductLine.getProgressList.length - 1].getId);
+                }
+            }
+            // 生产线未上锁
+            else if (idOfLock == CONST.STATUSOFLOCK.UNLOCK) {
+                // do nothing
+            }
+            // 部分上锁
+            else {
+                var progressBarOfLock = activedProductLine.getProgressById(idOfLock); // 上锁的进度条
+                // 排产进度比锁要前
+                if (progressBarOfLock.getStartTime > startTimeStamp) {
+                    this.showToast("该生产线尚未解锁");
+                    // 该排产计划已经排产，则恢复旧生产线数据渲染
+                    if (beforeProductLine) {
+                        // 该排产计划已经排产，则恢复旧生产线数据渲染
+                        beforeProductLine.clear(this.ctxOfSource);
+                        beforeProductLine.renderWithOutIdList(this.ctxOfSource, this.colorSetting, null);
+                    }
+                   return; 
+                }
             }
 
             /**
@@ -322,16 +392,17 @@ export default {
             // 获取当前激活生产线
             var productLineIndex = V2M.yToProductLineIndex(this.productLineList, y);
             var progressBarList = this.productLineList[productLineIndex].getProgressList;
+            var result = null;
             // 循环当前激活的生产线的进度条，检测是否在点击范围内
             for (var progressIndex=0; progressIndex<progressBarList.length; progressIndex++) {
                 if (progressBarList[progressIndex].isInArea(x, y)) {
-                    return progressBarList[progressIndex];
+                    result = progressBarList[progressIndex];
                 }
             }
             // 循环完都没有，返回 null
-            return null;
+            return result;
         },
-        // 左键显示菜单
+        // 右键显示菜单
         showWindowOfMenu: function(e) {
             // 获取当前激活的进度条
             var progressBar = this.getProgressBarByXY(e);

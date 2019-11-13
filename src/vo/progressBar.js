@@ -20,7 +20,6 @@ export default class ProgressBar {
         this.endTime = msgOfProgressBar.endTime; // 结束时间
         this.efficiencyBySetting = msgOfProgressBar.efficiencyBySetting; // 自选效率
         this.msgOfProgressBar = msgOfProgressBar; // 排产进度条详情
-        this.isLocked = true; // 是否上锁
         this.parentId = null; // 原拆单的进度条 ID
     }
 
@@ -151,7 +150,7 @@ export default class ProgressBar {
     // 获取工作量百分比
     get getPercentOfQuantityOfWork() {
         /* console.log(this.qtyFinish + "/" + this.qtyofbatcheddelivery); */
-        return Number((this.qtyFinish / this.qtyofbatcheddelivery).toFixed(2));
+        return Math.floor((this.qtyFinish / this.qtyofbatcheddelivery)*100) / 100;
     }
 
     // 获取 css 样式
@@ -305,12 +304,17 @@ export default class ProgressBar {
      * @param {*} ctx 画布的上下文
      * @param {*} colorSetting 颜色设置
      * @param {*} isHeigher 是否需要上移
+     * @param {*} isLock 是否解锁
      */
-    render(ctx, colorSetting, isHeigher) {
+    render(ctx, colorSetting, isHeigher, isLock) {
         ctx.save();
         var msgOfCSS = this.msgOfCSS;
         ctx.lineWidth = CONST.STYLEOFPROGRESSBAR.lineWidth; //设置线的宽度
-        ctx.strokeStyle = '#000';
+        if (isLock) {
+            ctx.strokeStyle = '#000';
+        } else {
+            ctx.strokeStyle = colorSetting.getUnLockColor;
+        }
         var width = msgOfCSS.width;
         if (msgOfCSS.width < 1) {
             width = 1;
