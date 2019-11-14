@@ -67,39 +67,39 @@ export default {
         },
         // 是否显示 toast
         isShowToast: function() {
-            return this.$store.state.isShowToast;
+            return this.$store.state.moduleOfDisplay.isShowToast;
         },
         // toast 文本
         toastTxt: function() {
-            return this.$store.state.toastTxt;
+            return this.$store.state.moduleOfDisplay.toastTxt;
         },
         // 是否显示加载中
         isLoading: function() {
-            return this.$store.state.isLoading;
+            return this.$store.state.moduleOfDisplay.isLoading;
         },
         // 是否显示右键菜单窗口
         isShowWindowOfMenu: function() {
-            return this.$store.state.isShowWindowOfMenu;
+            return this.$store.state.moduleOfDisplay.isShowWindowOfMenu;
         },
         // 是否显示减数窗口
         isShowWindowOfMinus: function() {
-            return this.$store.state.isShowWindowOfMinus;
+            return this.$store.state.moduleOfDisplay.isShowWindowOfMinus;
         },
         // 是否显示详情窗口
         isShowWindowOfDetail: function() {
-            return this.$store.state.isShowWindowOfDetail;
+            return this.$store.state.moduleOfDisplay.isShowWindowOfDetail;
         },
         // 是否显示自选效率窗口
         isShowWindowOfSettingEfficiency: function() {
-            return this.$store.state.isShowWindowOfSettingEfficiency;
+            return this.$store.state.moduleOfDisplay.isShowWindowOfSettingEfficiency;
         },
         // 是否显示拖动图层
         isShowBackgroundForDrawWindow: function() {
-            return this.$store.state.isShowBackgroundForDrawWindow;
+            return this.$store.state.moduleOfDisplay.isShowBackgroundForDrawWindow;
         },
         // 是否显示拆单图层
         isShowWindowOfSeparateBill: function() {
-            return this.$store.state.isShowWindowOfSeparateBill;
+            return this.$store.state.moduleOfDisplay.isShowWindowOfSeparateBill;
         },
     },
     created: function() {
@@ -194,8 +194,7 @@ export default {
         // 获取生产线信息
         getMsgOfProductLine: function() {
             var that = this;
-            var yearListOfShow = DateUtil.yearListOfShow;
-            this.axios.get(this.seieiURL + "productionline/getResourceDataByUserId?year=" + yearListOfShow[0]).then((response) => {
+            this.axios.get(this.seieiURL + "productionline/getResourceDataByUserId?time=" + DateUtil.firstTimeStampOfShow).then((response) => {
                 if (response.data.status) {
                     that.$store.commit("setIsLoading", false);
                     that.$Message.error(response.data.msg);

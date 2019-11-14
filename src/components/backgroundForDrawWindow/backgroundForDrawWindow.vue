@@ -21,7 +21,7 @@ export default {
         }
     },
     created: function() {
-        this.domOfDragWindow = this.$store.state.domOfDragWindow;
+        this.domOfDragWindow = this.$store.state.moduleOfDisplay.domOfDragWindow;
     },
     methods: {
         // 拖动窗口

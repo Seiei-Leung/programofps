@@ -5,12 +5,9 @@ export default class DateUtil {
 
     // 显示的第一天时间戳
     static get firstTimeStampOfShow() {
-        var now = new Date();
-        var yearOfPrevious = now.getMonth() == 0 ? now.getFullYear() - 1 : now.getFullYear(); // 当前时间的上一个月的年份
-        var monthOfPrevious = now.getMonth() == 0 ? 12 : now.getMonth(); // 当前时间的上一个月的月份
-        monthOfPrevious = DateUtil.zeroFillOfMonthOrDay(monthOfPrevious);
-        var dayCountOfShow = DateUtil.getDayCountOfMonth(yearOfPrevious, monthOfPrevious);
-        return DateUtil.strToTimeStamp(yearOfPrevious + "-" + monthOfPrevious + "-01");
+        var now = DateUtil.getTimeStampOfToday;
+        var fifteenDayAgo = now - 15 * DateUtil.timeStampOfOneDay; // 15 天之前的时间戳
+        return fifteenDayAgo;
     }
 
     // 用于日期栏显示
@@ -54,7 +51,7 @@ export default class DateUtil {
         var yearOfPrevious = now.getMonth() == 0 ? now.getFullYear() - 1 : now.getFullYear(); // 当前时间的上一个月的年份
         var monthOfPrevious = now.getMonth() == 0 ? 12 : now.getMonth(); // 当前时间的上一个月的月份
         monthOfPrevious = DateUtil.zeroFillOfMonthOrDay(monthOfPrevious);
-        var dayCountOfShow = DateUtil.getDayCountOfMonth(yearOfPrevious, monthOfPrevious);
+        var dayCountOfShow = DateUtil.getDayCountOfMonth(yearOfPrevious, monthOfPrevious) - new Date(DateUtil.firstTimeStampOfShow).getDate() + 1;
         // 制作日期栏标题数组以及用于显示的单元格总个数即总天数
         for (var i = 0; i < 13; i++) {
             monthOfPrevious = Number(monthOfPrevious) + 1;
@@ -167,7 +164,7 @@ export default class DateUtil {
     /**
      * 获取今天0时0点0秒的时间戳
      */
-    static getTimeStampOfToday() {
+    static get getTimeStampOfToday() {
         var now = new Date().getTime();
         return DateUtil.strToTimeStamp(DateUtil.timeStampToDate(now));
     }

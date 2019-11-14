@@ -24,11 +24,11 @@ export default {
     computed: {
         // 是否显示工作人数
         isShowNumberofwork() {
-            return this.$store.state.isShowNumberofwork;
+            return this.$store.state.moduleOfDisplay.isShowNumberofwork;
         },
         // 是否显示工作时间
         isShowWorkingHours() {
-            return this.$store.state.isShowWorkingHours;
+            return this.$store.state.moduleOfDisplay.isShowWorkingHours;
         },
         // 返回原生画布
         ctxOfSource() {
@@ -132,8 +132,7 @@ export default {
                     that.isInvaildSession(response.data.status);
                } else {
                     // 刷新数据
-                    var yearListOfShow = DateUtil.yearListOfShow;
-                    that.axios.get(that.seieiURL + "productionline/getResourceDataByUserId?year=" + yearListOfShow[0]).then((response) => {
+                    that.axios.get(that.seieiURL + "productionline/getResourceDataByUserId?time=" + DateUtil.firstTimeStampOfShow).then((response) => {
                         if (response.data.status) {
                             that.$store.commit("setIsLoading", false);
                             that.$Message.error(response.data.msg);

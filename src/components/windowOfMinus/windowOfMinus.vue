@@ -108,7 +108,7 @@ export default {
             /**
              * 减数操作
              */
-            var timeStampOfToday = DateUtil.getTimeStampOfToday();
+            var timeStampOfToday = DateUtil.getTimeStampOfToday;
             this.activedProgressBar.minus(productLineList[this.activedProgressBar.getProductLineIndex], this.factoryCalendar, this.numOfDone, timeStampOfToday);
             // 重新渲染
             productLineList[this.activedProgressBar.getProductLineIndex].clear(this.ctxOfSource);

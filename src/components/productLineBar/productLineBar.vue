@@ -26,7 +26,7 @@ export default {
     computed: {
         //  CSS 样式
         styleOfProductLinesClass: function() {
-            return this.$store.state.cssAboutScroll.styleOfProductLinesClass;
+            return this.$store.state.moduleOfDisplay.cssAboutScroll.styleOfProductLinesClass;
         },
         // CSS 样式
         styleOfTitleClass: function() {

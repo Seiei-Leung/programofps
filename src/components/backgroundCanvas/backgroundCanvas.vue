@@ -37,11 +37,11 @@ export default {
         },
         // 是否显示人数画布
         isShowNumberofwork: function() {
-            return this.$store.state.isShowNumberofwork;
+            return this.$store.state.moduleOfDisplay.isShowNumberofwork;
         },
         // 是否显示工时画布
         isShowWorkingHours: function() {
-            return this.$store.state.isShowWorkingHours;
+            return this.$store.state.moduleOfDisplay.isShowWorkingHours;
         }
     },
     // 挂载
@@ -63,12 +63,16 @@ export default {
 
         ctxOfBackground.lineWidth = CONST.STYLEOFCELL.lineWidth; //设置线的宽度
         ctxOfBackground.strokeStyle = CONST.STYLEOFCELL.borderColor;
-        ctxOfBackground.fillStyle = CONST.STYLEOFCELL.activedBackgroundColor;
         var dayCountOfShow = this.dayCountOfShow;
         var countOfProductLines = this.countOfProductLines;
         for (var n=0; n<countOfProductLines; n++) {
             for (var m=0; m<dayCountOfShow; m++) {
+                if (DateUtil.strToTimeStamp(DateUtil.indexToDateStr(m)) < DateUtil.getTimeStampOfToday) {
+                    ctxOfBackground.fillStyle = CONST.STYLEOFCELL.olderBackgroundColor;
+                    ctxOfBackground.fillRect(m*(CONST.STYLEOFCELL.width + 2*CONST.STYLEOFCELL.lineWidth)+0.5, n*(CONST.STYLEOFCELL.height + 2*CONST.STYLEOFCELL.lineWidth)+0.5, (CONST.STYLEOFCELL.width + 2*CONST.STYLEOFCELL.lineWidth), (CONST.STYLEOFCELL.height + 2*CONST.STYLEOFCELL.lineWidth));
+                }
                 if (this.$store.state.factoryCalendarObj.isHoliday(DateUtil.indexToDateStr(m))) {
+                    ctxOfBackground.fillStyle = CONST.STYLEOFCELL.activedBackgroundColor;
                     ctxOfBackground.fillRect(m*(CONST.STYLEOFCELL.width + 2*CONST.STYLEOFCELL.lineWidth)+0.5, n*(CONST.STYLEOFCELL.height + 2*CONST.STYLEOFCELL.lineWidth)+0.5, (CONST.STYLEOFCELL.width + 2*CONST.STYLEOFCELL.lineWidth), (CONST.STYLEOFCELL.height + 2*CONST.STYLEOFCELL.lineWidth));
                 }
                 // 渲染单元格

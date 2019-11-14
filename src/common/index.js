@@ -6,8 +6,7 @@ export default{
 		Vue.mixin({
 			data: function() {
 				return {
-					// seieiURL: "http://www.etscn.com.cn:58080/SaasapsBackEnd/api/",
-					seieiURL: "http://localhost:8080/api/",
+					seieiURL: "",
 				}
 			},
 			methods: {
@@ -52,9 +51,8 @@ export default{
 				// 重载生产线信息
 				reloadMsgOfProductLine: function() {
 					var that = this;
-					var yearListOfShow = DateUtil.yearListOfShow;
 					this.$store.commit("setIsLoading", true);
-					return this.axios.get(this.seieiURL + "productionline/getResourceDataByUserId?year=" + yearListOfShow[0]).then((response) => {
+					return this.axios.get(this.seieiURL + "productionline/getResourceDataByUserId?time=" + DateUtil.firstTimeStampOfShow).then((response) => {
 						if (response.data.status) {
 							that.$store.commit("setIsLoading", false);
 							that.$Message.error(response.data.msg);
@@ -110,6 +108,7 @@ export default{
 				},
 			},
 			created: function () {
+				this.seieiURL = location.href.split("SaasapsBackEnd/")[0] + "SaasapsBackEnd/api/";
 			}
 		})
 	}

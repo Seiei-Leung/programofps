@@ -286,7 +286,7 @@ export default class ProductLine {
     addProgressInTheEnd(progressBarOfInsert, factoryCalendar) {
         // 检查该生产线是否有排产进度列表，如果为空，则插入的生产线的开始时间默认为今天的 0点0分0秒
         if (this.progressList.length == 0) {
-            var now = DateUtil.getTimeStampOfToday();
+            var now = DateUtil.getTimeStampOfToday;
             progressBarOfInsert.reload(this, factoryCalendar, now);
             this.progressList.push(progressBarOfInsert);
             return;

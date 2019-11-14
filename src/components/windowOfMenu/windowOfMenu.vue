@@ -59,7 +59,7 @@ export default {
     computed: {
         // 右键窗口 CSS 信息
         msgOfWindowOfMenu: function() {
-            return this.$store.state.msgOfWindowOfMenu;
+            return this.$store.state.moduleOfDisplay.msgOfWindowOfMenu;
         },
         // 激活排产进度
         activedProgressBar: function() {

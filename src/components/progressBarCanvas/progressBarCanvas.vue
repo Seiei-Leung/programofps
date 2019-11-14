@@ -58,7 +58,7 @@ export default {
         },
         // 是否显示移动画布
         isShowCtxOfTmp: function() {
-            return this.$store.state.isShowCtxOfTmp;
+            return this.$store.state.moduleOfDisplay.isShowCtxOfTmp;
         },
         productLineList: function() {
             return this.$store.state.productLineList;

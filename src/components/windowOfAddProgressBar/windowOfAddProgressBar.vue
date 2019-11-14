@@ -80,7 +80,7 @@ export default {
 	computed: {
 		// 是否显示窗口
 		isShowWindow: function() {
-			return this.$store.state.isShowWindowOfAddProgress;
+			return this.$store.state.moduleOfDisplay.isShowWindowOfAddProgress;
 		},
 		// 窗口 css 样式
 		cssOfWindow: function() {
