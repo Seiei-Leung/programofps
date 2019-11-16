@@ -75,7 +75,7 @@ export default {
         this.$store.commit('setCtxOfTemp', ctxOfTemp);
         this.ctxOfTemp = ctxOfTemp;
         this.productLineList.forEach((item) => {
-            item.renderWithOutIdList(this.ctxOfSource, this.colorSetting, null);
+            item.renderWithOutIdList(this.ctxOfSource, this.colorSetting, null, null);
         });
     },
     created: function() {
@@ -122,10 +122,10 @@ export default {
 
             // 清除源画布
             activedProductLine.clear(this.ctxOfSource);
-            activedProductLine.renderWithOutIdList(this.ctxOfSource, this.colorSetting, [activedProgressBar.getId]);
+            activedProductLine.renderWithOutIdList(this.ctxOfSource, this.colorSetting, [activedProgressBar.getId], null);
 
             // 渲染移动画布
-            activedProgressBar.render(this.ctxOfTemp, this.colorSetting, false, true);
+            activedProgressBar.render(this.ctxOfTemp, this.colorSetting, false, true, false);
             this.$store.commit("setActivedProgressBar", activedProgressBar);
         },
         // 在源数据画布移动
@@ -243,7 +243,7 @@ export default {
                 if (beforeProductLine) {
                     // 该排产计划已经排产，则恢复旧生产线数据渲染
                     beforeProductLine.clear(this.ctxOfSource);
-                    beforeProductLine.renderWithOutIdList(this.ctxOfSource, this.colorSetting, null);
+                    beforeProductLine.renderWithOutIdList(this.ctxOfSource, this.colorSetting, null, null);
                 }
                 return;
             }
@@ -265,7 +265,7 @@ export default {
                     if (beforeProductLine) {
                         // 该排产计划已经排产，则恢复旧生产线数据渲染
                         beforeProductLine.clear(this.ctxOfSource);
-                        beforeProductLine.renderWithOutIdList(this.ctxOfSource, this.colorSetting, null);
+                        beforeProductLine.renderWithOutIdList(this.ctxOfSource, this.colorSetting, null, null);
                     }
                     return;
                 }
@@ -288,7 +288,7 @@ export default {
                     if (beforeProductLine) {
                         // 该排产计划已经排产，则恢复旧生产线数据渲染
                         beforeProductLine.clear(this.ctxOfSource);
-                        beforeProductLine.renderWithOutIdList(this.ctxOfSource, this.colorSetting, null);
+                        beforeProductLine.renderWithOutIdList(this.ctxOfSource, this.colorSetting, null, null);
                     }
                    return; 
                 }
@@ -349,7 +349,7 @@ export default {
              */
             activedProductLine.clear(this.ctxOfSource); // 清空图层
             var activedProgressIndex = activedProductLine.addProgress(activedProgressBar, this.factoryCalendar); // 激活生产线添加进度条
-            activedProductLine.renderWithOutIdList(this.ctxOfSource, this.colorSetting, null); // 渲染生产线
+            activedProductLine.renderWithOutIdList(this.ctxOfSource, this.colorSetting, null, null); // 渲染生产线
 
             /**
              * 记录历史操作
@@ -408,11 +408,21 @@ export default {
             var progressBar = this.getProgressBarByXY(e);
             // 如果没有激活进度条则不显示
             if (progressBar == null) {
+                this.clearActivedProgressBar();
                 this.$store.commit("setIsShowWindowOfMenu", false);
                 return;
             }
+            // 清除旧选中颜色
+            this.clearActivedProgressBar();
+
             this.$store.commit("setActivedProgressBar", progressBar);
             
+            // 渲染新的选中计划的边框颜色
+            var activedProductLine = this.productLineList[progressBar.getProductLineIndex];
+            activedProductLine.clear(this.ctxOfSource);
+            activedProductLine.renderWithOutIdList(this.ctxOfSource, this.colorSetting, null, activedProductLine.getProgressIndexById(progressBar.getId));
+
+
             // 调整位置
             var left = e.clientX;
             var top = e.clientY;
@@ -435,6 +445,7 @@ export default {
         },
         // 源画布鼠标点击事件
         mousedownOfSourceCanvas: function() {
+            this.clearActivedProgressBar();
             this.$store.commit("setIsShowWindowOfMenu", false);
         }
     }

@@ -12,9 +12,9 @@ export default class DateUtil {
 
     // 用于日期栏显示
     static get monthListOfShow() {
-        var now = new Date();
-        var yearOfPrevious = now.getMonth() == 0 ? now.getFullYear() - 1 : now.getFullYear(); // 当前时间的上一个月的年份
-        var monthOfPrevious = now.getMonth() == 0 ? 12 : now.getMonth(); // 当前时间的上一个月的月份
+        var firstDateOfShow = new Date(DateUtil.firstTimeStampOfShow);
+        var yearOfPrevious = firstDateOfShow.getFullYear(); // 当前时间的上一个月的年份
+        var monthOfPrevious = firstDateOfShow.getMonth() + 1; // 当前时间的上一个月的月份
         monthOfPrevious = DateUtil.zeroFillOfMonthOrDay(monthOfPrevious);
         var monthListOfShow = [yearOfPrevious + "-" + monthOfPrevious];
         // 制作日期栏标题数组以及用于显示的单元格总个数即总天数

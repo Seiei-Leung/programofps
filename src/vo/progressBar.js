@@ -305,8 +305,9 @@ export default class ProgressBar {
      * @param {*} colorSetting 颜色设置
      * @param {*} isHeigher 是否需要上移
      * @param {*} isLock 是否解锁
+     * @param {*} isActived 是否被选中
      */
-    render(ctx, colorSetting, isHeigher, isLock) {
+    render(ctx, colorSetting, isHeigher, isLock, isActived) {
         ctx.save();
         var msgOfCSS = this.msgOfCSS;
         ctx.lineWidth = CONST.STYLEOFPROGRESSBAR.lineWidth; //设置线的宽度
@@ -314,6 +315,9 @@ export default class ProgressBar {
             ctx.strokeStyle = '#000';
         } else {
             ctx.strokeStyle = colorSetting.getUnLockColor;
+        }
+        if (isActived) {
+            ctx.strokeStyle = colorSetting.getSelectedColor;
         }
         var width = msgOfCSS.width;
         if (msgOfCSS.width < 1) {

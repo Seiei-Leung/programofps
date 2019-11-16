@@ -29,6 +29,17 @@ export default{
 						window.location.assign(href);
 					}
 				},
+				// 清空被选中的计划进度的框边颜色
+				clearActivedProgressBar: function() {
+					var colorSetting = this.$store.state.colorSetting;
+					var ctxOfSource = this.$store.state.ctxOfSource;
+					var activedProgressBar = this.$store.state.activedProgressBar;
+					if (activedProgressBar != null) {
+						var activedProductLine = this.$store.state.productLineList[activedProgressBar.getProductLineIndex];
+						activedProductLine.clear(ctxOfSource);
+						activedProductLine.renderWithOutIdList(ctxOfSource, colorSetting, null, null);
+					}
+				},
         		// 获取待排产的详情列表
         		getAllForAddProgress: function() {
         		    var that = this;
@@ -93,7 +104,7 @@ export default{
 							// 重新渲染
 							productlineList.forEach((item) => {
 								item.clear(that.$store.state.ctxOfSource);
-								item.renderWithOutIdList(that.$store.state.ctxOfSource, that.$store.state.colorSetting, null);
+								item.renderWithOutIdList(that.$store.state.ctxOfSource, that.$store.state.colorSetting, null, null);
 							});
 						}
 					}).catch((error) => {

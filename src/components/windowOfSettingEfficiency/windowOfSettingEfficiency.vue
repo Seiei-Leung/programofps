@@ -72,6 +72,7 @@ export default {
     methods: {
         // 隐藏窗口
         hideWindow: function() {
+            this.clearActivedProgressBar();
             this.$store.commit("setIsShowWindowOfSettingEfficiency", false);
         },
         // 点击标题栏，拖动
@@ -113,7 +114,7 @@ export default {
              * 重新渲染
              */
             activedProductLine.clear(this.ctxOfSource); // 清空图层
-            activedProductLine.renderWithOutIdList(this.ctxOfSource, this.colorSetting, null); // 渲染生产线
+            activedProductLine.renderWithOutIdList(this.ctxOfSource, this.colorSetting, null, null); // 渲染生产线
 
             /**
              * 记录历史操作
@@ -137,7 +138,7 @@ export default {
             });
 
             // 关闭窗口
-            this.$store.commit("setIsShowWindowOfSettingEfficiency", false);
+            this.hideWindow();
         }
     }
 }

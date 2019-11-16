@@ -128,7 +128,7 @@ export default {
                     var productLineList = that.productLineList;
                     productLineList[activedProgressBar.getProductLineIndex].removeProgressById(activedProgressBar.getId);
                     productLineList[activedProgressBar.getProductLineIndex].clear(that.ctxOfSource);
-                    productLineList[activedProgressBar.getProductLineIndex].renderWithOutIdList(that.ctxOfSource, that.colorSetting, null);
+                    productLineList[activedProgressBar.getProductLineIndex].renderWithOutIdList(that.ctxOfSource, that.colorSetting, null, null);
                     that.$store.commit("setProductLineList", productLineList);
                     // 异步变同步
                     (async function() {
@@ -181,7 +181,7 @@ export default {
             }
             // 重新渲染
             activedProductLine.clear(this.ctxOfSource);
-            activedProductLine.renderWithOutIdList(this.ctxOfSource, this.colorSetting, null);
+            activedProductLine.renderWithOutIdList(this.ctxOfSource, this.colorSetting, null, null);
 
             /**
              * 记录历史操作
@@ -214,7 +214,8 @@ export default {
             var activedProductLine = productLineList[activedProgressBar.getProductLineIndex];
             activedProductLine.lock(); // 上锁
             activedProductLine.clear(this.ctxOfSource);
-            activedProductLine.renderWithOutIdList(this.ctxOfSource, this.colorSetting, null);
+            activedProductLine.renderWithOutIdList(this.ctxOfSource, this.colorSetting, null, null);
+            this.clearActivedProgressBar();
             this.$store.commit("setIsShowWindowOfMenu", false);
         },
         // 解锁生产线
@@ -230,7 +231,8 @@ export default {
                 activedProductLine.unLock(activedProductLine.getProgressList[activedProgressBarIndex - 1].getId);
             }
             activedProductLine.clear(this.ctxOfSource);
-            activedProductLine.renderWithOutIdList(this.ctxOfSource, this.colorSetting, null);
+            activedProductLine.renderWithOutIdList(this.ctxOfSource, this.colorSetting, null, null);
+            this.clearActivedProgressBar();
             this.$store.commit("setIsShowWindowOfMenu", false);
         }
 

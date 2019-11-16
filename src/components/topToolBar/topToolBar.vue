@@ -58,7 +58,7 @@ export default {
             this.$store.commit("setProductLineList", historyObj.getDataOfProductLineList);
             activedIndexListOfProductLine.forEach((item) => {
                 historyObj.getDataOfProductLineList[item].clear(this.ctxOfSource);
-                historyObj.getDataOfProductLineList[item].renderWithOutIdList(this.ctxOfSource, this.colorSetting, null);
+                historyObj.getDataOfProductLineList[item].renderWithOutIdList(this.ctxOfSource, this.colorSetting, null, null);
             })
             if (historyObj.getIsAddProgress) {
                 this.$store.commit("setWaitingAddProgressList", historyObj.getDataOfWaitingAddProgressList);
@@ -82,7 +82,7 @@ export default {
             this.$store.commit("setProductLineList", historyObj.getDataOfProductLineList);
             activedIndexListOfProductLine.forEach((item) => {
                 historyObj.getDataOfProductLineList[item].clear(this.ctxOfSource);
-                historyObj.getDataOfProductLineList[item].renderWithOutIdList(this.ctxOfSource, this.colorSetting, null);
+                historyObj.getDataOfProductLineList[item].renderWithOutIdList(this.ctxOfSource, this.colorSetting, null, null);
             })
             if (historyObj.getIsAddProgress) {
                 this.$store.commit("setWaitingAddProgressList", historyObj.getDataOfWaitingAddProgressList);
@@ -173,7 +173,7 @@ export default {
                             // 重新渲染
                             productlineList.forEach((item) => {
                                 item.clear(that.ctxOfSource);
-                                item.renderWithOutIdList(that.ctxOfSource, that.colorSetting, null);
+                                item.renderWithOutIdList(that.ctxOfSource, that.colorSetting, null, null);
                             });
                             // 清空历史记录
                             that.$store.commit("setHistoryObjList", []);

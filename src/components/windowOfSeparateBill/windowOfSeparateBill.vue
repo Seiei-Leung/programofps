@@ -86,6 +86,7 @@ export default {
     methods: {
         // 隐藏窗口
         hideWindow: function() {
+            this.clearActivedProgressBar();
             this.$store.commit("setIsShowWindowOfSeparateBill", false);
         },
         // 点击标题栏，拖动
@@ -159,10 +160,10 @@ export default {
             // 重新渲染
             // 被拆分的生产线渲染
             productLineList[activedProgressBar.getProductLineIndex].clear(this.ctxOfSource);
-            productLineList[activedProgressBar.getProductLineIndex].renderWithOutIdList(this.ctxOfSource, this.colorSetting, null);
+            productLineList[activedProgressBar.getProductLineIndex].renderWithOutIdList(this.ctxOfSource, this.colorSetting, null, null);
             // 拆分到的生产线渲染
             selectedProductLine.clear(this.ctxOfSource);
-            selectedProductLine.renderWithOutIdList(this.ctxOfSource, this.colorSetting, null);
+            selectedProductLine.renderWithOutIdList(this.ctxOfSource, this.colorSetting, null, null);
 
             /**
              * 历史操作

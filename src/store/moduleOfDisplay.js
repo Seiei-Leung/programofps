@@ -154,7 +154,7 @@ export default {
 			state.isShowWindowOfMinus = false;
 			state.isShowWindowOfDetail = false;
 			state.isShowWindowOfSeparateBill = false;
-			state.setIsShowWindowOfSettingEfficiency = false;
+			state.isShowWindowOfSettingEfficiency = false;
 		}
     },
   }

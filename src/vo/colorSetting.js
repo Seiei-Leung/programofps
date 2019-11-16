@@ -1,6 +1,6 @@
 // 计划颜色设定对象
 export default class ColorSetting {
-    constructor(defaultColor, defaultAdvanceColor, defaultDelayColor, advanceColor, advanceDaynum, delayColor, delayDaynum, unlockColor) {
+    constructor(defaultColor, defaultAdvanceColor, defaultDelayColor, advanceColor, advanceDaynum, delayColor, delayDaynum, unlockColor, selectedColor) {
         this.defaultColor = defaultColor; // 默认颜色
         this.defaultAdvanceColor = defaultAdvanceColor; // 默认提前颜色
         this.defaultDelayColor = defaultDelayColor; // 默认推迟颜色
@@ -9,6 +9,7 @@ export default class ColorSetting {
         this.delayColor = delayColor; // 推迟 delayDaynum 天数时的颜色
         this.delayDaynum = delayDaynum; // 推迟天数
         this.unlockColor = unlockColor; // 解锁计划的边框颜色
+        this.selectedColor = selectedColor; // 选定时的边框颜色
     }
 
     /**
@@ -49,6 +50,10 @@ export default class ColorSetting {
     // 获取解锁时边框
     get getUnLockColor() {
         return this.unlockColor;
+    }
+
+    get getSelectedColor() {
+        return this.selectedColor;
     }
 
 }

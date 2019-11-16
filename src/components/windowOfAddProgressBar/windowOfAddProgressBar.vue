@@ -95,6 +95,7 @@ export default {
 			this.waitingAddProgressList = this.$store.state.waitingAddProgressList;
 			this.waitingAddProgressListForShow = [...this.waitingAddProgressList];
 			this.$store.commit("closeAllWindow");
+			this.clearActivedProgressBar(); // 清空被选中的计划进度的框边颜色
 			this.$store.commit("setIsShowWindowOfAddProgress", true);
 		},
 		hideWindow: function() {

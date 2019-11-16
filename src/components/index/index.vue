@@ -114,10 +114,12 @@ export default {
 				scrollUtil.scroll();
 				if (scrollUtil.scrollDirection == 'down' || scrollUtil.scrollDirection == 'up') {
                     that.$store.commit('scrollUpOrDown');
+                    that.clearActivedProgressBar();
                     that.$store.commit('setIsShowWindowOfMenu', false);
                 } 
                 else if (scrollUtil.scrollDirection == 'right' || scrollUtil.scrollDirection == 'left') {
                     that.$store.commit('scrollRightOrLeft');
+                    that.clearActivedProgressBar();
                     that.$store.commit("setIsShowWindowOfMenu", false);
 				}
 			}
@@ -144,7 +146,8 @@ export default {
                         data.advanceDaynum,
                         data.delayColor,
                         data.delayDaynum,
-                        data.unlockColor
+                        data.unlockColor,
+                        data.selectedColor
                     );
                     that.$store.commit("setColorSetting", colorSetting);
                     that.getFactoryCalendar();

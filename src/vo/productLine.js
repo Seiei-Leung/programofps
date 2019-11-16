@@ -315,8 +315,9 @@ export default class ProductLine {
      * @param {*} ctx 画布上下文 
      * @param {*} colorSetting 颜色设置 
      * @param {*} idList 无需渲染的id列表
+     * @param {*} indexOfActived 选中的计划
      */
-    renderWithOutIdList(ctx, colorSetting, idList) {
+    renderWithOutIdList(ctx, colorSetting, idList, indexOfActived) {
         var isLock = null; // 是否上锁
         // 整条生产线都上锁
         if (this.idOfLock == CONST.STATUSOFLOCK.LOCK) {
@@ -328,6 +329,7 @@ export default class ProductLine {
         }
         if (idList == null) {
             for (var i=0; i<this.progressList.length; i++) {
+                var isActived = (indexOfActived == i);
                 // 如果锁的状态
                 if (this.idOfLock > 0) {
                     var indexOfLock = this.getProgressIndexById(this.idOfLock); // 解锁索引
@@ -335,13 +337,14 @@ export default class ProductLine {
                 }
                 // 是否发生重叠
                 if (this.progressList[i+1] != null && this.progressList[i].getEndTime > this.progressList[i+1].getStartTime) {
-                    this.progressList[i].render(ctx, colorSetting, true, isLock);
+                    this.progressList[i].render(ctx, colorSetting, true, isLock, isActived);
                 } else {
-                    this.progressList[i].render(ctx, colorSetting, false, isLock);
+                    this.progressList[i].render(ctx, colorSetting, false, isLock, isActived);
                 }
             }
         } else {
             for (var i=0; i<this.progressList.length; i++) {
+                var isActived = (indexOfActived == i);
                 // 是否在排除 id 的列表中
                 if (idList.indexOf(this.progressList[i].id) == -1) {
                     // 如果锁的状态
@@ -351,9 +354,9 @@ export default class ProductLine {
                     }
                     // 是否发生了重叠
                     if (this.progressList[i+1] != null && this.progressList[i].getEndTime > this.progressList[i+1].getStartTime) {
-                        this.progressList[i].render(ctx, colorSetting, true, isLock);
+                        this.progressList[i].render(ctx, colorSetting, true, isLock, isActived);
                     } else {
-                        this.progressList[i].render(ctx, colorSetting, false, isLock);
+                        this.progressList[i].render(ctx, colorSetting, false, isLock, isActived);
                     }
                 }
             }

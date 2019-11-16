@@ -84,6 +84,7 @@ export default {
     methods: {
         // 隐藏窗口
         hideWindow: function() {
+            this.clearActivedProgressBar();
             this.$store.commit("setIsShowWindowOfMinus", false);
         },
         // 点击减数按钮
@@ -112,7 +113,7 @@ export default {
             this.activedProgressBar.minus(productLineList[this.activedProgressBar.getProductLineIndex], this.factoryCalendar, this.numOfDone, timeStampOfToday);
             // 重新渲染
             productLineList[this.activedProgressBar.getProductLineIndex].clear(this.ctxOfSource);
-            productLineList[this.activedProgressBar.getProductLineIndex].renderWithOutIdList(this.ctxOfSource, this.colorSetting, null);
+            productLineList[this.activedProgressBar.getProductLineIndex].renderWithOutIdList(this.ctxOfSource, this.colorSetting, null, null);
 
             /**
              * 记录历史操作

@@ -7,7 +7,7 @@
             </div>
             <div class="productLinesHook" v-bind:style="styleOfProductLinesHook">
                 <div class="productLine" v-for="(item, index) in productLineList" v-bind:key="index">
-                    {{item.fullName}}（{{item.getDefaultStyleName}}）
+                    {{item.fullName}}({{item.getDefaultStyleName}})
                 </div>
             </div>
         </div>
@@ -77,7 +77,6 @@ export default {
 
 .productLines .productLine {
 	box-sizing: border-box;
-	padding: 0 1em;
 	height: 36px;
 	line-height: 36px;
 	font-size: 12px;

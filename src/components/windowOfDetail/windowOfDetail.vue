@@ -33,7 +33,15 @@
             </div>
             <div class="item">
                 <div class="title">
-                    品类
+                    产品分类
+                </div>
+                <div class="txt">
+                    {{msgOfProgressbar.style}}
+                </div>
+            </div>
+            <div class="item">
+                <div class="title">
+                    款式分类
                 </div>
                 <div class="txt">
                     {{msgOfProgressbar.productStyleName}}
@@ -168,6 +176,7 @@ export default {
     methods: {
         // 隐藏窗口
         hideWindow: function() {
+            this.clearActivedProgressBar();
             this.$store.commit("setIsShowWindowOfDetail", false);
         },
         // 时间戳转字符串
