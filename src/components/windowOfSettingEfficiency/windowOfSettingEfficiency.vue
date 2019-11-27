@@ -85,6 +85,7 @@ export default {
             var activedProgressBar = this.activedProgressBar;
             var productLineList = this.productLineList;
             var activedProductLine = productLineList[activedProgressBar.getProductLineIndex];
+            var argumentSetting = this.$store.state.argumentSetting; // 参数设置
 
             /**
              * 记录历史操作
@@ -108,7 +109,18 @@ export default {
             activedProductLine.removeProgressById(activedProgressBar.getId);
             activedProgressBar.setEfficiencyOfSetting(this.efficiencyOfSetting);
             activedProgressBar.reload(activedProductLine, this.factoryCalendar, activedProgressBar.getStartTime);
-            var activedProgressIndex = activedProductLine.addProgress(activedProgressBar, this.factoryCalendar); // 激活生产线添加进度条
+            var activedProgressBarIndex = Number(activedProductLine.addProgress(activedProgressBar, this.factoryCalendar)); // 激活生产线添加进度条
+            // 如果参数设置了自动消除空隙
+            if (argumentSetting.getIsRemoveGapModelAfterMinusOrChangeEfficiency) {
+                // 消除间隙操作
+                var progressList = activedProductLine.getProgressList;
+                for (var i=activedProgressBarIndex+1; i<progressList.length; i++) {
+                    // 如果没有重叠
+                    if (progressList[i-1].getEndTime < progressList[i].getStartTime) {
+                        progressList[i].reload(activedProductLine, this.factoryCalendar, progressList[i-1].getEndTime); // 消除间隙
+                    }
+                }
+            }
 
             /**
              * 重新渲染
@@ -134,7 +146,7 @@ export default {
              */
             this.$store.commit("addActivedObjListOfProductLine", {
                 productLineIndex: activedProductLine.getIndex,
-                progressBarIndex: Number(activedProgressIndex)
+                progressBarIndex: Number(activedProgressBarIndex)
             });
 
             // 关闭窗口

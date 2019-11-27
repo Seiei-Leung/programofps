@@ -90,6 +90,11 @@ export default {
         // 点击减数按钮
         minus: function() {
             var productLineList = this.productLineList;
+            var activedProgressBar = this.activedProgressBar;
+            var activedProductLine = productLineList[activedProgressBar.getProductLineIndex];
+            var activedProgressBarIndex = activedProductLine.getProgressIndexById(activedProgressBar.getId);
+            var argumentSetting = this.$store.state.argumentSetting; // 参数设置
+
             /**
              * 记录历史操作
              */
@@ -110,10 +115,21 @@ export default {
              * 减数操作
              */
             var timeStampOfToday = DateUtil.getTimeStampOfToday;
-            this.activedProgressBar.minus(productLineList[this.activedProgressBar.getProductLineIndex], this.factoryCalendar, this.numOfDone, timeStampOfToday);
+            activedProgressBar.minus(activedProductLine, this.factoryCalendar, this.numOfDone, timeStampOfToday);
+            // 如果参数设置了自动消除空隙
+            if (argumentSetting.getIsRemoveGapModelAfterMinusOrChangeEfficiency) {
+                // 消除间隙操作
+                var progressList = activedProductLine.getProgressList;
+                for (var i=activedProgressBarIndex+1; i<progressList.length; i++) {
+                    // 如果没有重叠
+                    if (progressList[i-1].getEndTime < progressList[i].getStartTime) {
+                        progressList[i].reload(activedProductLine, this.factoryCalendar, progressList[i-1].getEndTime); // 消除间隙
+                    }
+                }
+            }
             // 重新渲染
-            productLineList[this.activedProgressBar.getProductLineIndex].clear(this.ctxOfSource);
-            productLineList[this.activedProgressBar.getProductLineIndex].renderWithOutIdList(this.ctxOfSource, this.colorSetting, null, null);
+            activedProductLine.clear(this.ctxOfSource);
+            activedProductLine.renderWithOutIdList(this.ctxOfSource, this.colorSetting, null, null);
 
             /**
              * 记录历史操作
@@ -132,8 +148,8 @@ export default {
              * 记录激活的生产线索引对象
              */
             this.$store.commit("addActivedObjListOfProductLine", {
-                productLineIndex: this.activedProgressBar.getProductLineIndex,
-                progressBarIndex: productLineList[this.activedProgressBar.getProductLineIndex].getProgressIndexById(this.activedProgressBar.getId)
+                productLineIndex: activedProgressBar.getProductLineIndex,
+                progressBarIndex: activedProgressBarIndex
             });
             
             // 关闭窗口

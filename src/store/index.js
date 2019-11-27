@@ -12,6 +12,7 @@ export default new Vuex.Store({
 		moduleOfDisplay: moduleOfDisplay,
 	},
 	state: {
+		argumentSetting: null, // 参数设置
 		colorSetting: null, // 计划进度颜色设置
 		ctxOfSource: null, // 源画布 上下文
 		ctxOfTemp: null, // 移动画布 上下文
@@ -25,6 +26,10 @@ export default new Vuex.Store({
 		activedObjListOfProductLine: [], // 激活过的生产线索引与所在生产线最早更新的排产计划索引组成的键值对
 	},
 	mutations: {
+		// 设置参数设置
+		setArgumentSetting(state, data) {
+			state.argumentSetting = data;
+		},
 		// 计划进度颜色设置
 		setColorSetting(state, data) {
 			state.colorSetting = data;

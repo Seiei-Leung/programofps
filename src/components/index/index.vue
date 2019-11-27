@@ -53,6 +53,7 @@ import windowOfSettingEfficiency from "../windowOfSettingEfficiency/windowOfSett
 import backgroundForDrawWindow from "../backgroundForDrawWindow/backgroundForDrawWindow";
 import ScrollUtil from "../../common/scrollUtil";
 import ColorSetting from "../../vo/colorSetting";
+import ArgumentSetting from "../../vo/argumentSetting";
 
 export default {
     data: function() {
@@ -103,10 +104,21 @@ export default {
         },
     },
     created: function() {
-        this.getColorSetting();
+        var that = this;
+        this.$store.commit("setIsLoading", true);
         this.getAllForAddProgress();
-		var that = this;
-		
+        // async 同步，aysnc 函数之后的语句并不是同步的，即如消除下面控制台的注释，"async 外输出的语句" 会比 "async 内输出的语句" 输出的要前
+        (async function() {
+            await that.getArgumentSetting(); // 获取参数设置
+            await that.getColorSetting(); // 获取颜色设置
+            await that.getFactoryCalendar(); // 获取工厂日历
+            await that.getMsgOfProductLine(); // 获取生产线数据
+            that.$store.commit("setIsLoading", false); // 消除 loading
+            that.isDone = true; // 渲染子组件
+            // console.log("async 内输出的语句");
+        })();
+        // console.log("async 外输出的语句");
+        
 		// 绑定滚动事件
 		this.$nextTick(() => {
 			var scrollUtil = new ScrollUtil();
@@ -114,22 +126,41 @@ export default {
 				scrollUtil.scroll();
 				if (scrollUtil.scrollDirection == 'down' || scrollUtil.scrollDirection == 'up') {
                     that.$store.commit('scrollUpOrDown');
-                    that.clearActivedProgressBar();
-                    that.$store.commit('setIsShowWindowOfMenu', false);
                 } 
                 else if (scrollUtil.scrollDirection == 'right' || scrollUtil.scrollDirection == 'left') {
                     that.$store.commit('scrollRightOrLeft');
-                    that.clearActivedProgressBar();
-                    that.$store.commit("setIsShowWindowOfMenu", false);
 				}
 			}
 		});
     },
     methods: {
+        // 获取参数设置
+        getArgumentSetting: function() {
+            var that = this;
+            this.axios.get(this.seieiURL + "argumentSetting/getAll").then((response) => {
+                if (response.data.status) {
+                    that.$store.commit("setIsLoading", false);
+                    that.$Message.error(response.data.msg);
+                    that.isInvaildSession(response.data.status);
+                } else {
+                    var argumentSetting = new ArgumentSetting(
+                        response.data.data.afterMinusorchangeefficiencyHasremovegapmodel
+                    );
+                    that.$store.commit("setArgumentSetting", argumentSetting);
+                }
+            }).catch((error) => {
+                that.$store.commit("setIsLoading", false);
+                that.$Message.error({
+                  content: "服务器异常,请刷新！！",
+                  duration: 0,
+                  closable: true
+                });
+                console.log(error);
+            });
+        },
         // 获取进度条颜色样式
         getColorSetting: function() {
             var that = this;
-            this.$store.commit("setIsLoading", true);
             this.axios.get(this.seieiURL + "colorSetting/getByUserId").then((response) => {
                 if (response.data.status) {
                     that.$store.commit("setIsLoading", false);
@@ -150,7 +181,6 @@ export default {
                         data.selectedColor
                     );
                     that.$store.commit("setColorSetting", colorSetting);
-                    that.getFactoryCalendar();
                 }
             }).catch((error) => {
                 that.$store.commit("setIsLoading", false);
@@ -166,7 +196,7 @@ export default {
         getFactoryCalendar: function() {
             var that = this;
             var yearListOfShow = DateUtil.yearListOfShow;
-            this.axios.get(this.seieiURL + "factoryCalendar/getFactoryCalendarByYear?yearList=" + yearListOfShow.join(",")).then((response) => {
+            return this.axios.get(this.seieiURL + "factoryCalendar/getFactoryCalendarByYear?yearList=" + yearListOfShow.join(",")).then((response) => {
                 if (response.data.status) {
                     that.$store.commit("setIsLoading", false);
                     that.$Message.error(response.data.msg);
@@ -182,7 +212,6 @@ export default {
                     });
                     // 保存到 vuex 中
                     that.$store.commit('setFactoryCalendarObj', factoryCalendar);
-                    that.getMsgOfProductLine();
                 }
             }).catch((error) => {
                 that.$store.commit("setIsLoading", false);
@@ -197,7 +226,7 @@ export default {
         // 获取生产线信息
         getMsgOfProductLine: function() {
             var that = this;
-            this.axios.get(this.seieiURL + "productionline/getResourceDataByUserId?time=" + DateUtil.firstTimeStampOfShow).then((response) => {
+            return this.axios.get(this.seieiURL + "productionline/getResourceDataByUserId?time=" + DateUtil.firstTimeStampOfShow).then((response) => {
                 if (response.data.status) {
                     that.$store.commit("setIsLoading", false);
                     that.$Message.error(response.data.msg);
@@ -233,9 +262,7 @@ export default {
                         productlineList.push(productLineItem);
                     }
                     // 保存到 vuex 中
-                    that.$store.commit("setIsLoading", false);
                     that.$store.commit('setProductLineList', productlineList);
-                    that.isDone = true;
                 }
             }).catch((error) => {
                 that.$store.commit("setIsLoading", false);

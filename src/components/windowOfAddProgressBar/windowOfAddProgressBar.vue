@@ -54,6 +54,11 @@ export default {
                 	align: "center"
 				},
 				{
+                	title: 'SAH',
+                	key: 'sah',
+                	align: "center"
+				},
+				{
                 	title: '计划数量',
                 	key: 'qtyofbatcheddelivery',
                 	align: "center",
@@ -115,13 +120,15 @@ export default {
 		// 筛选数据
 		filterData: function() {
 			var that = this;
+			// 正则表达式
+			var regExp = new RegExp(that.filterOrderno);
 			var waitingAddProgressListForShow = [];
 			if (this.filterOrderno == "") {
 				this.waitingAddProgressListForShow = this.waitingAddProgressList;
 				return;
 			}
 			this.waitingAddProgressList.forEach((item) => {
-				if (this.filterOrderno == item.orderno) {
+				if (regExp.test(item.orderno)) {
 					waitingAddProgressListForShow.push(item);
 				}
 			});
