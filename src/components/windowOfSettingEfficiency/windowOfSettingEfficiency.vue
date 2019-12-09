@@ -40,6 +40,7 @@
 
 <script>
 import HistoryObj from "../../vo/historyObj";
+import DateUtil from "../../common/dateUtil";
 
 export default {
     data: function() {
@@ -86,6 +87,7 @@ export default {
             var productLineList = this.productLineList;
             var activedProductLine = productLineList[activedProgressBar.getProductLineIndex];
             var argumentSetting = this.$store.state.argumentSetting; // 参数设置
+            var timeStampOfToday = DateUtil.getTimeStampOfToday;
 
             /**
              * 记录历史操作
@@ -108,8 +110,8 @@ export default {
              */ 
             activedProductLine.removeProgressById(activedProgressBar.getId);
             activedProgressBar.setEfficiencyOfSetting(this.efficiencyOfSetting);
-            activedProgressBar.reload(activedProductLine, this.factoryCalendar, activedProgressBar.getStartTime);
-            var activedProgressBarIndex = Number(activedProductLine.addProgress(activedProgressBar, this.factoryCalendar)); // 激活生产线添加进度条
+            activedProgressBar.reloadWithOutSettingStartTime(activedProductLine, this.factoryCalendar, timeStampOfToday);
+            var activedProgressBarIndex = Number(activedProductLine.addProgressWithOutAmendAtFirst(activedProgressBar, this.factoryCalendar)); // 激活生产线添加进度条
             // 如果参数设置了自动消除空隙
             if (argumentSetting.getIsRemoveGapModelAfterMinusOrChangeEfficiency) {
                 // 消除间隙操作

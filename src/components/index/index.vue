@@ -11,7 +11,11 @@
         <!-- 装载进度条画布 -->
         <v-progressBarCanvas v-if="isDone"></v-progressBarCanvas>
         <!-- 右侧添加进度条窗口 -->
-        <v-windowOfAddProgressBar></v-windowOfAddProgressBar>
+        <v-windowOfAddProgressBar v-if="isShowWindowOfAddProgress"></v-windowOfAddProgressBar>
+        <!-- 右侧添加批量减数窗口 -->
+        <v-windowOfBatchMinus v-if="isShowWindowOfBatchMinus"></v-windowOfBatchMinus>
+        <!-- 右侧添加批量自选效率窗口 -->
+        <v-windowOfBatchSettingEfficiency v-if="isShowWindowOfBatchSettingEfficiency"></v-windowOfBatchSettingEfficiency>
         <!-- 提示组件 -->
         <v-toast v-show="isShowToast" v-bind:txt="toastTxt"></v-toast>
         <!-- 鼠标右击进度条显示菜单 -->
@@ -43,6 +47,8 @@ import M2V from "../../common/M2V";
 import DateUtil from "../../common/dateUtil";
 import FactoryCalendar from "../../vo/factoryCalendar";
 import windowOfAddProgressBar from "../windowOfAddProgressBar/windowOfAddProgressBar";
+import windowOfBatchMinus from "../windowOfBatchMinus/windowOfBatchMinus";
+import windowOfBatchSettingEfficiency from "../windowOfBatchSettingEfficiency/windowOfBatchSettingEfficiency";
 import toast from "../toast/toast";
 import loading from "../loading/loading";
 import windowOfMenu from "../windowOfMenu/windowOfMenu";
@@ -65,6 +71,18 @@ export default {
         // 生产线源数据
         productLineList: function() {
             return this.$store.state.productLineList;
+        },
+		// 是否显示新增排产窗口
+		isShowWindowOfAddProgress: function() {
+			return this.$store.state.moduleOfDisplay.isShowWindowOfAddProgress;
+        },
+        // 是否显示批量减数窗口
+        isShowWindowOfBatchMinus: function() {
+            return this.$store.state.moduleOfDisplay.isShowWindowOfBatchMinus;
+        },
+        // 是否显示批量自选效率窗口
+        isShowWindowOfBatchSettingEfficiency: function() {
+            return this.$store.state.moduleOfDisplay.isShowWindowOfBatchSettingEfficiency;
         },
         // 是否显示 toast
         isShowToast: function() {
@@ -144,6 +162,7 @@ export default {
                     that.isInvaildSession(response.data.status);
                 } else {
                     var argumentSetting = new ArgumentSetting(
+                        response.data.data.afterMinusHasamend,
                         response.data.data.afterMinusorchangeefficiencyHasremovegapmodel
                     );
                     that.$store.commit("setArgumentSetting", argumentSetting);
@@ -282,6 +301,8 @@ export default {
         'v-backgroundCanvas': backgroundCanvas,
         'v-progressBarCanvas': progressBarCanvas,
         'v-windowOfAddProgressBar': windowOfAddProgressBar,
+        "v-windowOfBatchMinus": windowOfBatchMinus,
+        "v-windowOfBatchSettingEfficiency": windowOfBatchSettingEfficiency,
         "v-toast": toast,
         "v-loading": loading,
         "v-windowOfMenu": windowOfMenu,

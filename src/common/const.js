@@ -66,6 +66,14 @@ export default class Const {
         }
     }
 
+    // 获取筛选标题的高度
+    static get STYLEOFFILTERTABLE() {
+        return {
+            height: 88
+        }
+    }
+
+
     // 排产进度上锁状态
     static get STATUSOFLOCK() {
         return {

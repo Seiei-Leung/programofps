@@ -30,7 +30,9 @@ export default {
 		toastTxt: "", // toast 提示文本
 		isShowCtxOfTmp: false, // 是否显示移动画布
 		isLoading: false, // 是否显示 loading 图层
-        isShowWindowOfAddProgress: false, // 是否显示添加进度条窗口
+		isShowWindowOfAddProgress: false, // 是否显示添加进度条窗口
+		isShowWindowOfBatchMinus: false, // 是否显示批量减数窗口
+		isShowWindowOfBatchSettingEfficiency: false, // 是否显示批量自选效率窗口
 		isShowWindowOfMenu: false, // 是否显示右键菜单窗口
 		isShowWindowOfMinus: false, // 是否显示减数窗口
 		isShowWindowOfDetail: false, // 是否显示详情窗口
@@ -119,6 +121,14 @@ export default {
 		setIsShowWindowOfAddProgress(state, data) {
 			state.isShowWindowOfAddProgress = data;
 		},
+		// 切换显示批量减数窗口
+		setIsShowWindowOfBatchMinus(state, data) {
+			state.isShowWindowOfBatchMinus = data;
+		},
+		// 切换显示批量自选效率窗口
+		setIsShowWindowOfBatchSettingEfficiency(state, data) {
+			state.isShowWindowOfBatchSettingEfficiency = data;
+		},
 		// 切换显示左键拆单
 		setIsShowWindowOfMenu(state, data) {
 			state.isShowWindowOfMenu = data;
@@ -150,11 +160,13 @@ export default {
 		// 全部窗口关闭
 		closeAllWindow(state) {
 			state.isShowWindowOfAddProgress = false;
+			state.isShowWindowOfBatchMinus = false;
 			state.isShowWindowOfMenu = false;
 			state.isShowWindowOfMinus = false;
 			state.isShowWindowOfDetail = false;
 			state.isShowWindowOfSeparateBill = false;
 			state.isShowWindowOfSettingEfficiency = false;
+			state.isShowWindowOfBatchSettingEfficiency = false;
 		}
     },
   }

@@ -36,8 +36,11 @@ export default{
 					var activedProgressBar = this.$store.state.activedProgressBar;
 					if (activedProgressBar != null) {
 						var activedProductLine = this.$store.state.productLineList[activedProgressBar.getProductLineIndex];
-						activedProductLine.clear(ctxOfSource);
-						activedProductLine.renderWithOutIdList(ctxOfSource, colorSetting, null, null);
+						// 当前激活的进度条有可能是新增进度条，因此没有生产线
+						if (activedProductLine != null) {
+							activedProductLine.clear(ctxOfSource);
+							activedProductLine.renderWithOutIdList(ctxOfSource, colorSetting, null, null);
+						}
 					}
 				},
         		// 获取待排产的详情列表

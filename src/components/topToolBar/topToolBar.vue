@@ -5,8 +5,11 @@
         <div class="item item2" @click="historyRemake">重做 <Icon type="ios-fastforward" /></div>
         <div class="item" @click="submitBtn">保存 <Icon type="md-cloud-upload" /></div>
         <div class="item" @click="refreshPage">刷新 <Icon type="md-refresh" /></div>
-        <div class="item item3" @click="showNumberOfWork"><span v-show="!isShowNumberofwork">显示工作人数</span><span v-show="isShowNumberofwork">隐藏工作人数</span> <Icon type="ios-body" /></div>
-        <div class="item item3"  @click="showWorkingHours"><span v-show="!isShowWorkingHours">显示工作时间</span><span v-show="isShowWorkingHours">隐藏工作时间</span> <Icon type="md-alarm" /></div>
+        <div class="item item3" @click="showWindowOfAddProgress">添加排产 <Icon type="ios-add-circle-outline" /></div>
+        <div class="item item3" @click="showWindowOfBatchMinus">批量减数 <Icon type="ios-list-box" /></div>
+        <div class="item item3" @click="showWindowOfBatchSettingEfficiency">批量自选效率 <Icon type="ios-list-box" /></div>
+        <div class="item item4" @click="showNumberOfWork"><span v-show="!isShowNumberofwork">显示工作人数</span><span v-show="isShowNumberofwork">隐藏工作人数</span> <Icon type="ios-body" /></div>
+        <div class="item item4"  @click="showWorkingHours"><span v-show="!isShowWorkingHours">显示工作时间</span><span v-show="isShowWorkingHours">隐藏工作时间</span> <Icon type="md-alarm" /></div>
     </div>
 </template>
 
@@ -205,6 +208,24 @@ export default {
         refreshPage: function() {
             window.location.reload();
         },
+        // 显示添加排产窗口
+        showWindowOfAddProgress: function() {
+			this.$store.commit("closeAllWindow");
+			this.clearActivedProgressBar(); // 清空被选中的计划进度的框边颜色
+			this.$store.commit("setIsShowWindowOfAddProgress", true);
+        },
+        // 显示批量减数
+        showWindowOfBatchMinus: function() {
+            this.$store.commit("closeAllWindow");
+			this.clearActivedProgressBar(); // 清空被选中的计划进度的框边颜色
+			this.$store.commit("setIsShowWindowOfBatchMinus", true);
+        },
+        // 显示自选效率窗口
+        showWindowOfBatchSettingEfficiency: function() {
+            this.$store.commit("closeAllWindow");
+			this.clearActivedProgressBar(); // 清空被选中的计划进度的框边颜色
+			this.$store.commit("setIsShowWindowOfBatchSettingEfficiency", true);
+        },
         // 显示人数
         showNumberOfWork: function() {
             this.$store.commit("toggleNumberofwork");
@@ -213,8 +234,6 @@ export default {
         showWorkingHours: function() {
             this.$store.commit("toggleWorkingHours");
         }
-    },
-    created: function() {
     }
 }
 </script>
@@ -247,6 +266,9 @@ export default {
     background-color:#ffad33;
 }
 .topToolBar-component .item3 {
+    background-color: #2db7f5;
+}
+.topToolBar-component .item4 {
     background-color: #4fa0f6;
 }
 .topToolBar-component .item:hover {

@@ -279,6 +279,96 @@ export default class ProductLine {
     }
 
     /**
+     * 添加进度条，但添加的进度条本身无需进行后移调整
+     * @param {*} progressBarOfInsert 进度条对象
+     * @param {*} factoryCalendar 工厂日历
+     */
+    addProgressWithOutAmendAtFirst(progressBarOfInsert, factoryCalendar) {
+        var progressBarIndexOfReset = 0; // 用于重置的
+        var isInserted = false; // 是否已经插入了进度条
+        var progressBarLocal; // 取于本地生产线用于比较的进度条
+        var progressBarOfCompare = progressBarOfInsert; // 设置用于比较的进度条
+        var relationOfInsert; // 插入进度的状态
+        for (var progressBarIndex=0; progressBarIndex<this.progressList.length; progressBarIndex++) {
+            // 还没有插入新的进度条
+            if (!isInserted) {
+                progressBarLocal = this.progressList[progressBarIndex];
+                relationOfInsert = ProgressBar.getRelationByProgressBar(progressBarLocal, progressBarOfCompare);
+                // 新增的进度条与本地进度条不重叠，且本地进度条靠前
+                if (relationOfInsert == "NO_CLASH_LOCAL_EARLY") {
+                    progressBarIndexOfReset  += 1;
+                    continue;
+                }
+                // 新增的进度条的 **开启时间 ** 与本地进度条的发生重叠
+                else if (relationOfInsert == "CLASH_STARTTIME") {
+                    console.log("新增的进度条的 **开启时间** 与本地进度条的发生重叠");
+                    
+                    // 循环索引 +1
+                    progressBarIndex += 1;
+                    // 插入数据
+                    this.progressList.splice(progressBarIndex, 0, progressBarOfInsert);
+
+                    // 如果源生产线数据中，本地计划的结束时间比后面的一些计划的结束时间要靠前
+                    // 则将在下一次的循环中忽略它
+                    for (var progressBarIndex2=progressBarIndex+1; progressBarIndex2<this.progressList.length; progressBarIndex2++) {
+                        if (this.progressList[progressBarIndex2].getEndTime <= progressBarLocal.getEndTime) {
+                            progressBarIndex += 1;
+                        }
+                    }
+                    isInserted = true; //更新为已插入
+                    progressBarLocal = progressBarOfInsert; // 重置本地生产线用于比较的进度条
+                    
+                }
+                // 新增的进度条的 **结束时间 ** 与本地进度条的发生重叠
+                else if (relationOfInsert == "CLASH_ENDTIME") {
+                    console.log("新增的进度条的 **结束时间** 与本地进度条的发生重叠");
+
+                    // 插入数据，因为新增进度条靠前，所以取代了发生重叠进度条的位置
+                    this.progressList.splice(progressBarIndex, 0, progressBarOfInsert);            
+                    // 往后进度条的索引都加 1，后续结束会加 1
+                    progressBarIndex += 1;
+                    // 重置发生重叠的进度条的信息
+                    progressBarLocal.reload(this, factoryCalendar, progressBarOfInsert.getEndTime);
+                    isInserted = true; //更新为已插入
+                }
+                // 不发生重叠，且新增的进度条靠前
+                else {
+                    continue;
+                }
+            }
+            // 新增进度条已经插入
+            else {
+                // 重置用于比较的进度条，
+                progressBarOfCompare = this.progressList[progressBarIndex];
+                var relation = ProgressBar.getRelationByProgressBar(progressBarLocal, progressBarOfCompare);
+                // 如果不发生重叠，且本地进度条靠前
+                if (relation == "NO_CLASH_LOCAL_EARLY") {
+                    progressBarLocal = progressBarOfCompare; // 重置本地生产线用于比较的进度条
+                    continue;
+                }
+                // 发生重叠
+                else {
+                    // 更新发生重叠的数据
+                    progressBarOfCompare.reload(this, factoryCalendar, progressBarLocal.getEndTime);
+                    progressBarLocal = progressBarOfCompare; // 重置本地生产线用于比较的进度条
+                    continue;
+                }
+            }
+        }
+        // 循环所有的进度条后，isInserted 仍然为 false, 即对所有的进度条都没有发生重叠，可以直接插入
+        if (!isInserted) {
+            console.log("没有发生重叠");
+            // 插入数据
+            this.progressList.splice(progressBarIndexOfReset, 0, progressBarOfInsert);
+        }
+        // 重新排序计划列表
+        this.sortProgressList();
+        return this.getProgressIndexById(progressBarOfInsert.getId) + "";
+    }
+
+
+
+    /**
      * 从生产线最后插入进度条
      * @param {*} progressBarOfInsert 进度条对象
      * @param {*} factoryCalendar 工厂日历

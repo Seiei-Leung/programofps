@@ -116,6 +116,12 @@ export default {
              */
             var timeStampOfToday = DateUtil.getTimeStampOfToday;
             activedProgressBar.minus(activedProductLine, this.factoryCalendar, this.numOfDone, timeStampOfToday);
+            // 如果设置减数后顺延
+            if (argumentSetting.getAfterMinusHasamend) {
+                activedProductLine.removeProgressById(activedProgressBar.getId);
+                activedProductLine.addProgressWithOutAmendAtFirst(activedProgressBar, this.factoryCalendar)
+            }
+
             // 如果参数设置了自动消除空隙
             if (argumentSetting.getIsRemoveGapModelAfterMinusOrChangeEfficiency) {
                 // 消除间隙操作

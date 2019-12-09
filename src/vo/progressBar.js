@@ -144,6 +144,14 @@ export default class ProgressBar {
 
     // 获取详情信息
     get getMsgOfProgressBar() {
+        // 修正数据
+        this.msgOfProgressBar.qtyFinish = this.qtyFinish;
+        this.msgOfProgressBar.qtyofbatcheddelivery = this.qtyofbatcheddelivery;
+        this.msgOfProgressBar.startTime = this.startTime;
+        this.msgOfProgressBar.endTime = this.endTime;
+        this.msgOfProgressBar.efficiencyBySetting = this.efficiencyBySetting;
+        this.msgOfProgressBar.productLineIndex = this.productLineIndex;
+        this.msgOfProgressBar.productionLineId = this.productionLineId;
         return this.msgOfProgressBar;
     }
 
@@ -207,6 +215,18 @@ export default class ProgressBar {
      */
     reload(productLine, factoryCalendar, startTime) {
         this.startTime = startTime;
+        this.setEndTime(productLine, factoryCalendar, startTime);
+        this.productionLineId = productLine.getId;
+        this.productLineIndex = productLine.getIndex;
+    }
+
+    /**
+     * 重置进度条的生产线、工厂日历属性，开始时间，从而更新数据，但不更新开始时间
+     * @param {*} productLine  生产线实例
+     * @param {*} factoryCalendar 工厂日历实例
+     * @param {*} startTime 结算设置的开始时间，并非进度条的实际开始时间
+     */
+    reloadWithOutSettingStartTime(productLine, factoryCalendar, startTime) {
         this.setEndTime(productLine, factoryCalendar, startTime);
         this.productionLineId = productLine.getId;
         this.productLineIndex = productLine.getIndex;
