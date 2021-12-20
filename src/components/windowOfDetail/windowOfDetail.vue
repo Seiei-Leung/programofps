@@ -36,7 +36,7 @@
                     产品分类
                 </div>
                 <div class="txt">
-                    {{msgOfProgressbar.style}}
+                    {{msgOfProgressbar.goodname}}
                 </div>
             </div>
             <div class="item">

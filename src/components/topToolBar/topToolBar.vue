@@ -5,7 +5,8 @@
         <div class="item item2" @click="historyRemake">重做 <Icon type="ios-fastforward" /></div>
         <div class="item" @click="submitBtn">保存 <Icon type="md-cloud-upload" /></div>
         <div class="item" @click="refreshPage">刷新 <Icon type="md-refresh" /></div>
-        <div class="item item3" @click="showWindowOfAddProgress">添加排产 <Icon type="ios-add-circle-outline" /></div>
+        <div class="item item3" @click="showWindowOfAddProgress" v-if="isReadyShowWindowOfAddProgress">添加排产 <Icon type="ios-add-circle-outline" /></div>
+        <div class="item5" v-if="!isReadyShowWindowOfAddProgress">正在加载待排产信息列表 <Icon type="ios-add-circle-outline" /></div>
         <div class="item item3" @click="showWindowOfBatchMinus">批量减数 <Icon type="ios-list-box" /></div>
         <div class="item item3" @click="showWindowOfBatchSettingEfficiency">批量自选效率 <Icon type="ios-list-box" /></div>
         <div class="item item4" @click="showNumberOfWork"><span v-show="!isShowNumberofwork">显示工作人数</span><span v-show="isShowNumberofwork">隐藏工作人数</span> <Icon type="ios-body" /></div>
@@ -25,6 +26,10 @@ export default {
         }
     },
     computed: {
+        // 是否已经获取好待添加排产的数据
+        isReadyShowWindowOfAddProgress() {
+            return this.$store.state.moduleOfDisplay.isReadyShowWindowOfAddProgress;
+        },
         // 是否显示工作人数
         isShowNumberofwork() {
             return this.$store.state.moduleOfDisplay.isShowNumberofwork;
@@ -270,6 +275,17 @@ export default {
 }
 .topToolBar-component .item4 {
     background-color: #4fa0f6;
+}
+.topToolBar-component .item5 {
+	display: inline-block;
+    box-sizing: border-box;
+    padding: 0px 5px;
+    margin: 5px 0px 5px 5px;
+    line-height: 25px;
+    font-size: 14px;
+    border-radius: 4px;
+    background-color: #ddd;
+    color: #fff;
 }
 .topToolBar-component .item:hover {
 	background-color: rgba(0,0,0,0.5);

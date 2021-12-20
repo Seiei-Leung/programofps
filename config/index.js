@@ -10,7 +10,16 @@ module.exports = {
     // Paths
     assetsSubDirectory: 'static',
     assetsPublicPath: '/',
-    proxyTable: {},
+    proxyTable: {
+      "/": {
+        /* 目标代理服务器地址 */
+        target: "http://www.etscn.com.cn:58080/",
+        /* 允许跨域 */
+        changeOrigin: true,
+        pathRewrite: {
+        }
+      }
+    },
 
     // Various Dev Server settings
     host: 'localhost', // can be overwritten by process.env.HOST

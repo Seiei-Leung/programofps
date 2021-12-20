@@ -88,6 +88,7 @@ export default {
             var activedProductLine = productLineList[activedProgressBar.getProductLineIndex];
             var argumentSetting = this.$store.state.argumentSetting; // 参数设置
             var timeStampOfToday = DateUtil.getTimeStampOfToday;
+            var startTimeStamp = activedProgressBar.getStartTime > timeStampOfToday ? activedProgressBar.getStartTime : timeStampOfToday; // 用于计算结束时间的开始时间节点
 
             /**
              * 记录历史操作
@@ -110,7 +111,7 @@ export default {
              */ 
             activedProductLine.removeProgressById(activedProgressBar.getId);
             activedProgressBar.setEfficiencyOfSetting(this.efficiencyOfSetting);
-            activedProgressBar.reloadWithOutSettingStartTime(activedProductLine, this.factoryCalendar, timeStampOfToday);
+            activedProgressBar.reloadWithOutSettingStartTime(activedProductLine, this.factoryCalendar, startTimeStamp);
             var activedProgressBarIndex = Number(activedProductLine.addProgressWithOutAmendAtFirst(activedProgressBar, this.factoryCalendar)); // 激活生产线添加进度条
             // 如果参数设置了自动消除空隙
             if (argumentSetting.getIsRemoveGapModelAfterMinusOrChangeEfficiency) {

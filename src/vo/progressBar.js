@@ -102,7 +102,7 @@ export default class ProgressBar {
     }
 
     /**
-     * 获取日产
+     * 获取默认日产
      * @param {*} productLine 所在生产线对象
      * @param {*} startTime 排产条开始时间
      */
@@ -125,6 +125,20 @@ export default class ProgressBar {
         var peopleNum = productLine.getPeopleNumByDate(startTime);
         var workHours = productLine.getWorkHoursByDate(startTime);
         return (peopleNum * workHours * efficiency * 60)/this.sam;
+    }
+
+    /**
+     * 实际日产，如果自选日产有值，返回自选日产，否则返回默认日产
+     * @param {*} productLine 所在生产线对象
+     * @param {*} startTime 排产条开始时间
+     * @returns 
+     */
+    getDailyMakingForComputed(productLine, startTime) {
+        var dailyMakingForComputed = this.getDailyMakingOfSetting(productLine, startTime);
+        if (dailyMakingForComputed > 0) {
+            return dailyMakingForComputed;
+        }
+        return this.getDailyMaking(productLine, startTime);
     }
 
     // 获取开启时间
@@ -243,11 +257,31 @@ export default class ProgressBar {
         if (efficiency == null) {
             return null;
         }
-        var peopleNum = productLine.getPeopleNumByDate(startTime);
-        var workHours = productLine.getWorkHoursByDate(startTime);
-        // 需要天数
-        var dayCount = ((this.qtyofbatcheddelivery - this.qtyFinish)*this.sam/60)/(efficiency*peopleNum*workHours);
-        console.log("((" + this.qtyofbatcheddelivery + "-" + this.qtyFinish + ")*" + this.sam + "/60)/(" + efficiency + "*" + peopleNum + "*" + workHours + ") = " + dayCount);
+        
+        var dayCount = 0; // 需求天数
+        var qtyNeedDone = this.qtyofbatcheddelivery - this.qtyFinish; // 尚未做完的工作量
+        var dailyMakingForComputed = this.getDailyMakingForComputed(productLine, startTime); // 获取日产值
+
+        // 规定前三天的效率只有 50%，即日产只有正常的一半
+        var dayCountForLowEfficiency = 3; // 前多少天的效率是低的
+        var LowEfficiency = 0.5; // 刚开始天数的低效率值
+        var now = DateUtil.getTimeStampOfToday; // 今天时间
+        var timeStampOfEndLowEfficiency = this.getStartTime + dayCountForLowEfficiency * DateUtil.timeStampOfOneDay; // 效率恢复正常时日期的时间戳
+        // 当前还有多少天工作日是低效率的
+        var remainDayCountLowEfficiency = DateUtil.timeStampsToDayCount(now, timeStampOfEndLowEfficiency) > dayCountForLowEfficiency ? dayCountForLowEfficiency : DateUtil.timeStampsToDayCount(now, timeStampOfEndLowEfficiency);
+        // 如果在低效率的这些工作日内就完成了工作
+        if (qtyNeedDone < remainDayCountLowEfficiency * dailyMakingForComputed * LowEfficiency) {
+            console.log("低效率工作日内就完成了工作");
+            console.log(qtyNeedDone + "/(" + dailyMakingForComputed + "*" + LowEfficiency + ")");
+            dayCount = qtyNeedDone/(dailyMakingForComputed * LowEfficiency);
+        }
+        // 在低效率的这些工作日内未能完成了工作
+        else
+        {
+            dayCount = remainDayCountLowEfficiency + (qtyNeedDone - remainDayCountLowEfficiency * dailyMakingForComputed * LowEfficiency)/dailyMakingForComputed;
+            console.log("低效率天数 + (未完成数 - 低效率天数 * 日产 * 低效率)/日产 = 所需工作日天数");
+            console.log(remainDayCountLowEfficiency + "+ (" + qtyNeedDone + "-" + remainDayCountLowEfficiency + "*" + dailyMakingForComputed + "*" + LowEfficiency + ")/" + dailyMakingForComputed + " = " + dayCount);
+        }
         // 结合节假日，设置结束时间
         var endTime = startTime + Math.ceil(dayCount*DateUtil.timeStampOfOneDay);
         endTime = factoryCalendar.getEndTime(startTime, endTime);

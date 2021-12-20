@@ -6,7 +6,7 @@ export default{
 		Vue.mixin({
 			data: function() {
 				return {
-					seieiURL: "",
+					seieiURL: "http://193.112.62.129:8080/SaasapsBackEnd/api/",
 				}
 			},
 			methods: {
@@ -45,12 +45,14 @@ export default{
 				},
         		// 获取待排产的详情列表
         		getAllForAddProgress: function() {
-        		    var that = this;
+         		    var that = this;
+					this.$store.commit("setIsReadyShowWindowOfAddProgress", false);
         		    return this.axios.get(this.seieiURL + "productionplanningdetail/getAllForAddProgress").then((response) => {
         		        if (response.data.status) {
         		            that.$Message.error(response.data.msg);
         		            that.isInvaildSession(response.data.status);
         		        } else {
+							that.$store.commit("setIsReadyShowWindowOfAddProgress", true);
         		            that.$store.commit("setWaitingAddProgressList", response.data.data);
         		        }
         		    }).catch((error) => {
@@ -122,7 +124,6 @@ export default{
 				},
 			},
 			created: function () {
-				this.seieiURL = location.href.split("SaasapsBackEnd/")[0] + "SaasapsBackEnd/api/";
 			}
 		})
 	}

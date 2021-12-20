@@ -24,6 +24,7 @@ export default {
 			top: "0px",
 			left: "0px"
 		}, // 右键菜单的位置 CSS 样式
+		isReadyShowWindowOfAddProgress: false, // 是否已经获取好待添加排产的数据
 		isShowNumberofwork: false, // 是否显示人数
 		isShowWorkingHours: false, // 是否显示工作时间
 		isShowToast: false, // 是否显示 toast 提示
@@ -81,6 +82,10 @@ export default {
 		// 设置右键菜单位置的 CSS 样式
 		setMsgOfWindowOfMenu(state, data) {
 			state.msgOfWindowOfMenu = data;
+		},
+		// 设置是否已经获取好待添加排产的数据
+		setIsReadyShowWindowOfAddProgress(state, data) {
+			state.isReadyShowWindowOfAddProgress = data;
 		},
 		// 显示人数
 		toggleNumberofwork(state) {

@@ -13,8 +13,8 @@ export default class DateUtil {
     // 用于日期栏显示
     static get monthListOfShow() {
         var firstDateOfShow = new Date(DateUtil.firstTimeStampOfShow);
-        var yearOfPrevious = firstDateOfShow.getFullYear(); // 当前时间的上一个月的年份
-        var monthOfPrevious = firstDateOfShow.getMonth() + 1; // 当前时间的上一个月的月份
+        var yearOfPrevious = firstDateOfShow.getFullYear(); // 显示的第一天时间戳当前的年份
+        var monthOfPrevious = firstDateOfShow.getMonth() + 1; // 显示的第一天时间戳当前的月份
         monthOfPrevious = DateUtil.zeroFillOfMonthOrDay(monthOfPrevious);
         var monthListOfShow = [yearOfPrevious + "-" + monthOfPrevious];
         // 制作日期栏标题数组以及用于显示的单元格总个数即总天数
@@ -126,12 +126,15 @@ export default class DateUtil {
     }
 
     /**
-     * 通过两个时间戳的差值转化为 天数
+     * 通过两个时间戳的差值转化为 天数，如果 开始时间小于结束时间，则返回 0
      * @param {*} sTimeStamp 开始时间
      * @param {*} eTimeStamp 结束时间
      */
     static timeStampsToDayCount(sTimeStamp, eTimeStamp) {
         var timeStamp = eTimeStamp - sTimeStamp;
+        if (timeStamp < 0) {
+            return 0;
+        }
         return Math.ceil(timeStamp / DateUtil.timeStampOfOneDay)
     }
 
