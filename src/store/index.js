@@ -18,12 +18,12 @@ export default new Vuex.Store({
 		ctxOfTemp: null, // 移动画布 上下文
 		factoryCalendarObj: {}, // 工厂日历
 		productLineList: [], // 生产线源数据
-		isShowWindowOfAddProgress: false, // 是否显示添加进度条窗口
 		waitingAddProgressList: [], // 等待被添加的排产详情列表
+		selectedWaitingAddProgressList: [], // 勾选了的等待被添加的排产详情列表（用于智能排产）
 		activedProgressBar: null, // 拖动激活的进度条
 		historyObjList: [], // 历史记录列表
 		activedIndexOfHistoryObjList: null, // 历史记录列表的索引
-		activedObjListOfProductLine: [], // 激活过的生产线索引与所在生产线最早更新的排产计划索引组成的键值对
+		activedObjListOfProductLine: [], // 激活过的生产线索引与所在生产线最早更新的排产计划索引组成的键值对，形式为：{ `生产线索引`: `进度条在生产线中的索引`}
 	},
 	mutations: {
 		// 设置参数设置
@@ -65,6 +65,11 @@ export default new Vuex.Store({
 			waitingAddProgressList.splice(index, 1);
 			state.waitingAddProgressList = waitingAddProgressList;
 		},
+		// 设置 勾选了的等待被添加的排产详情列表（用于智能排产）
+		setSelectedWaitingAddProgressLis(state, selectedWaitingAddProgressList) {
+			state.selectedWaitingAddProgressList = selectedWaitingAddProgressList;
+
+		},
 		// 设置拖动激活 activedProgressBar
 		setActivedProgressBar(state, activedProgressBar) {
 			state.activedProgressBar = activedProgressBar;
@@ -74,17 +79,18 @@ export default new Vuex.Store({
 			state.historyObjList = historyObjList;
 		},
 		// 插入历史记录
-		pushHistoryObjList(state, productLineList) {
+		pushHistoryObjList(state, historyObj) {
 			var historyObjList = [...state.historyObjList];
 			if (state.activedIndexOfHistoryObjList == null) {
-				historyObjList.push(productLineList);
+				historyObjList.push(historyObj);
 				state.historyObjList = historyObjList;
+				state.activedIndexOfHistoryObjList = 0;
 			} else {
 				var historyObjListTemp = [];
 				for (var i=0; i<=state.activedIndexOfHistoryObjList; i++) {
 					historyObjListTemp.push(historyObjList[i]);
 				}
-				historyObjListTemp.push(productLineList);
+				historyObjListTemp.push(historyObj);
 				state.activedIndexOfHistoryObjList += 1;
 				state.historyObjList = historyObjListTemp;
 			}

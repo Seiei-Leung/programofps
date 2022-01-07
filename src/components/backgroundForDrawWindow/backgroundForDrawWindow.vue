@@ -33,7 +33,7 @@ export default {
             if (0 <= left && left <= (window.innerWidth - domOfDragWindow.offsetWidth)) {
                 domOfDragWindow.style.left = left + "px";
             }
-            if (0 <= top && top <= (window.innerHeight - domOfDragWindow.offsetHeight)) {
+            if (0 <= top && top <= (window.innerHeight - 2*CONST.STYLEOFWINDOW.titleHeight)) {
                 domOfDragWindow.style.top = top + "px";
             }
         },

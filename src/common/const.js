@@ -54,7 +54,8 @@ export default class Const {
     // 窗口 CSS 样式
     static get STYLEOFWINDOW() {
         return {
-            titleHeight: 35
+            titleHeight: 35, // 标题高度
+            lineWidth: 2, // 边线宽度
         }
     }
 
@@ -66,19 +67,45 @@ export default class Const {
         }
     }
 
-    // 获取筛选标题的高度
-    static get STYLEOFFILTERTABLE() {
+    // 添加排产窗体样式
+    static get STYLEOFWINDOWOFADDPROGRESSBAR() {
         return {
-            height: 88
+            width: 1000, // 窗口宽度
         }
     }
 
+    // 筛选表格组件样式
+    static get STYLEOFFILTERTABLE() {
+        return {
+            heightOfFilterTable: 88, // 筛选标题的高度
+            heightOfRow: 48, // 行高
+            widthOfScrollBar: 15// 滚动条高度
+        }
+    }
 
     // 排产进度上锁状态
     static get STATUSOFLOCK() {
         return {
             LOCK: -1,
             UNLOCK: -2
+        }
+    }
+
+    // 用于保存时，辨识操作的 ID 前缀
+    static get PREFIXOFPROGRESSBARID() {
+        return {
+            NEW: "NEW_",
+            LOGICALLYDELETE: "LOGICALLY_DELETE_",
+            PHYSICALLYDELETE: "PHYSICALLY_DELETE_"
+        }
+    }
+
+    // 鼠标 ICON 信息
+    static get MSGOFMOUSEICON() {
+        return {
+            width: 32,
+            URLOFSCISSORSCLOSE: "static/img/scissorsClose.ico",
+            URLOFSCISSORSOPEN: "static/img/scissorsOpen.ico"
         }
     }
 }

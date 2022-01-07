@@ -57,7 +57,7 @@
 </template>
 
 <script>
-import HistoryObj from "../../vo/historyObj";
+import CONST from "../../common/const";
 import ProgressBar from "../../vo/progressBar";
 
 export default {
@@ -128,20 +128,9 @@ export default {
             }
             
             /**
-             * 记录历史操作
+             * 记录历史操作（之前没有记录过历史操作，则初始化历史记录快照）
              */
-            var historyObj = null;
-            var productLineListTemp = [];
-            if (this.$store.state.historyObjList.length == 0) {
-                for (var i=0; i<productLineList.length; i++) {
-                    productLineListTemp.push(productLineList[i].copy());
-                }
-                historyObj = new HistoryObj(
-                    productLineListTemp,
-                    null
-                );
-                this.$store.commit("pushHistoryObjList", historyObj);
-            }
+            this.initHistoryObjList(productLineList, null);
 
             /**
              * 拆单操作
@@ -150,11 +139,17 @@ export default {
             activedProgressBar.setQtyofbatcheddelivery(productLineList[activedProgressBar.getProductLineIndex], this.factoryCalendar, (activedProgressBar.getQtyofbatcheddelivery - this.numOfSeparateBill), activedProgressBar.getStartTime);
             // 创建新增生产线对象
             var newMsgOfProgressBar = {...activedProgressBar.getMsgOfProgressBar};
-            newMsgOfProgressBar.id = "new" + (new Date()).getTime();
+            newMsgOfProgressBar.id = CONST.PREFIXOFPROGRESSBARID.NEW + (new Date()).getTime();
             newMsgOfProgressBar.qtyFinish = 0;
             newMsgOfProgressBar.qtyofbatcheddelivery = this.numOfSeparateBill;
             var newProgressBar = new ProgressBar(indexOfSelectedProductLine, selectedProductLine.getId, newMsgOfProgressBar);
-            newProgressBar.setParentId(activedProgressBar.getId);
+            // 赋值 parentId
+            if (activedProgressBar.getParentId) {
+                // 如果被拆单的进度条本身就是一个由拆单而生成的进度条（未点击保存）
+                newProgressBar.setParentId(activedProgressBar.getParentId);
+            } else {
+                newProgressBar.setParentId(activedProgressBar.getId);
+            }
             // 新增排产信息到拆分生产线的最后
             selectedProductLine.addProgressInTheEnd(newProgressBar, this.factoryCalendar);
             // 重新渲染
@@ -166,17 +161,9 @@ export default {
             selectedProductLine.renderWithOutIdList(this.ctxOfSource, this.colorSetting, null, null);
 
             /**
-             * 历史操作
+             * 记录历史操作
              */
-            productLineListTemp = [];
-            for (var i=0; i<productLineList.length; i++) {
-                productLineListTemp.push(productLineList[i].copy());
-            }
-            historyObj = new HistoryObj(
-                productLineListTemp,
-                null
-            );
-            this.$store.commit("pushHistoryObjList", historyObj);
+            this.pushHistoryObjList(productLineList, null, null);
 
             /**
              * 记录激活的生产线索引对象

@@ -1,4 +1,5 @@
-import DateUtil from "../common/dateUtil";
+import DateUtil from "./dateUtil";
+import HistoryObj from "../vo/historyObj";
 
 // 注册自定义插件
 export default{
@@ -7,6 +8,8 @@ export default{
 			data: function() {
 				return {
 					seieiURL: "http://193.112.62.129:8080/SaasapsBackEnd/api/",
+					//seieiURL: "http://localhost:8080/SaasapsBackEnd/api/",
+					//seieiURL: "http://www.etscn.com.cn:58080/SaasapsBackEnd/api/"
 				}
 			},
 			methods: {
@@ -122,6 +125,62 @@ export default{
 						console.log(error);
 					});
 				},
+				/**
+				 * 之前没有记录过历史版本，则初始化历史版本快照
+				 * @param {*} productLineList 生产线信息
+				 * @param {*} dataOfWaitingAddProgressList 待排产表信息 
+				 * @returns 
+				 */
+				initHistoryObjList: function(productLineList, dataOfWaitingAddProgressList) {
+					var productLineListTemp = [];
+					var historyObjListFromStore = this.$store.state.historyObjList;
+					if (historyObjListFromStore.length == 0) {
+						for (var i=0; i<productLineList.length; i++) {
+							productLineListTemp.push(productLineList[i].copy());
+						}
+						var historyObj = new HistoryObj(
+							productLineListTemp,
+							dataOfWaitingAddProgressList,
+							[]
+						);
+						this.$store.commit("pushHistoryObjList", historyObj);
+						return true;
+					}
+					return false;
+				},
+				/**
+				 * 之前有记录历史版本，记录历史版本
+				 * @param {*} productLineList 生产线信息
+				 * @param {*} dataOfWaitingAddProgressList 待排产表信息 
+				 * @param {*} progressIdForDelete 删除进度条的 ID 
+				 * @returns 
+				 */
+				pushHistoryObjList: function(productLineList, dataOfWaitingAddProgressList, progressIdForDelete) {
+					var productLineListTemp = [];
+					for (var i=0; i<productLineList.length; i++) {
+						productLineListTemp.push(productLineList[i].copy());
+					}
+					var historyObjListFromStore = this.$store.state.historyObjList;
+					var listOfDeleteIdForSave = []; // 用于保存 删除进度条的id列表 的信息
+					// 获取上一个历史版本实例
+					var activedIndexOfHistoryObjList = this.$store.state.activedIndexOfHistoryObjList; // 当前历史版本对应的索引
+					if (activedIndexOfHistoryObjList != 0) {
+						// 获取上一个历史版本实例
+						var historyObjOfLast = historyObjListFromStore[activedIndexOfHistoryObjList];
+						// 获取上一个历史版本实例的 删除进度条的id列表 的信息
+						listOfDeleteIdForSave = historyObjOfLast.getListOfDeleteProgressId;
+					}
+					// 添加了删除进度条的ID
+					if (progressIdForDelete != null) {
+						listOfDeleteIdForSave.push(progressIdForDelete);
+					}
+					var historyObj = new HistoryObj(
+						productLineListTemp,
+						dataOfWaitingAddProgressList,
+						listOfDeleteIdForSave
+					);
+					this.$store.commit("pushHistoryObjList", historyObj);
+				}
 			},
 			created: function () {
 			}

@@ -56,7 +56,6 @@
 
 <script>
 import DateUtil from "../../common/dateUtil";
-import HistoryObj from "../../vo/historyObj";
 
 export default {
     data: function() {
@@ -96,20 +95,9 @@ export default {
             var argumentSetting = this.$store.state.argumentSetting; // 参数设置
 
             /**
-             * 记录历史操作
+             * 记录历史操作（之前没有记录过历史操作，则初始化历史记录快照）
              */
-            var historyObj = null;
-            var productLineListTemp = [];
-            if (this.$store.state.historyObjList.length == 0) {
-                for (var i=0; i<productLineList.length; i++) {
-                    productLineListTemp.push(productLineList[i].copy());
-                }
-                historyObj = new HistoryObj(
-                    productLineListTemp,
-                    null
-                );
-                this.$store.commit("pushHistoryObjList", historyObj);
-            }
+            this.initHistoryObjList(productLineList, null);
 
             /**
              * 减数操作
@@ -140,15 +128,7 @@ export default {
             /**
              * 记录历史操作
              */
-            productLineListTemp = [];
-            for (var i=0; i<productLineList.length; i++) {
-                productLineListTemp.push(productLineList[i].copy());
-            }
-            historyObj = new HistoryObj(
-                productLineListTemp,
-                null
-            );
-            this.$store.commit("pushHistoryObjList", historyObj);
+            this.pushHistoryObjList(productLineList, null, null);
 
             /**
              * 记录激活的生产线索引对象

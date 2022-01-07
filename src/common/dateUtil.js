@@ -36,10 +36,13 @@ export default class DateUtil {
         var firstYearStr = monthListOfShow[0];
         var lastYearStr = monthListOfShow[monthListOfShow.length-1];
         var list = [];
-        firstYearStr = firstYearStr.split("-")[0];
-        lastYearStr = lastYearStr.split("-")[0];
+        firstYearStr = Number(firstYearStr.split("-")[0]);
+        lastYearStr = Number(lastYearStr.split("-")[0]);
         list.push(firstYearStr);
         if (firstYearStr != lastYearStr) {
+            if (lastYearStr - firstYearStr > 1) {
+                list.push(Number(firstYearStr)+1);
+            }
             list.push(lastYearStr);
         }
         return list;

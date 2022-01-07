@@ -15,6 +15,7 @@ export default class ProgressBar {
         this.sam = msgOfProgressBar.sam; // sam
         this.qtyofbatcheddelivery = msgOfProgressBar.qtyofbatcheddelivery; // 计划数量
         this.efficiencyOfClass = msgOfProgressBar.efficiencyOfClass; // 产品效率
+        this.prophaseLowEfficiencyOfClass = msgOfProgressBar.prophaseLowEfficiencyOfClass; // 前三天低效率
         this.productStyleName = msgOfProgressBar.productStyleName; // 品类
         this.startTime = msgOfProgressBar.startTime; // 开始时间
         this.endTime = msgOfProgressBar.endTime; // 结束时间
@@ -79,6 +80,14 @@ export default class ProgressBar {
             return 0;
         }
         return this.efficiencyBySetting;
+    }
+
+    /**
+     * 设置制单号
+     * @param {*} orderno 制单号 
+     */
+    setOrderno(orderno) {
+        this.msgOfProgressBar.orderno = orderno;
     }
 
     /**
@@ -264,7 +273,7 @@ export default class ProgressBar {
 
         // 规定前三天的效率只有 50%，即日产只有正常的一半
         var dayCountForLowEfficiency = 3; // 前多少天的效率是低的
-        var LowEfficiency = 0.5; // 刚开始天数的低效率值
+        var LowEfficiency = this.prophaseLowEfficiencyOfClass; // 刚开始天数的低效率值
         var now = DateUtil.getTimeStampOfToday; // 今天时间
         var timeStampOfEndLowEfficiency = this.getStartTime + dayCountForLowEfficiency * DateUtil.timeStampOfOneDay; // 效率恢复正常时日期的时间戳
         // 当前还有多少天工作日是低效率的

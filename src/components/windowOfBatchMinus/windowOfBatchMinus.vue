@@ -1,7 +1,7 @@
 <template>
     <div class="windowOfBatchMinus-component">
         <!-- 右侧批量减数窗口 -->
-        <div class="windowOfBatchMinus zIndexSuperTop window">
+        <div class="windowOfBatchMinus zIndexSuperTop window" v-bind:style="{width: cssOfWindow.widthOfWindow}">
             <div class="header">
                 <div class="txt">批 量 减 数</div>
                 <div class="closeBtn" @click="hideWindow">
@@ -14,7 +14,8 @@
 				@on-search="filterData"
 				:data="msgOfActivedProgressBarListForShow"
                 :columns="tableColumns"
-                :height="tableHeight">
+                :heightOfRealTable="cssOfWindow.heightOfTable"
+				:widthOfRealTable="cssOfWindow.widthOfTable">
 			</v-filterTable>
             <div class="btn" @click="submitChange">
                 确 认 修 改
@@ -27,7 +28,6 @@
 import filterTable from "../filterTable/filterTable";
 import DateUtil from "../../common/dateUtil";
 import CONST from "../../common/const";
-import HistoryObj from "../../vo/historyObj";
 
 export default {
     data: function() {
@@ -59,7 +59,7 @@ export default {
 			  	},
 				{
                 	title: '客户',
-                	key: 'clientName',
+                	key: 'clientname',
                 	align: "center",
             		filter: {
               			type: 'Input'
@@ -177,20 +177,9 @@ export default {
             var argumentSetting = this.$store.state.argumentSetting; // 参数设置
 
             /**
-             * 记录历史操作
+             * 记录历史操作（之前没有记录过历史操作，则初始化历史记录快照）
              */
-            var historyObj = null;
-            var productLineListTemp = [];
-            if (this.$store.state.historyObjList.length == 0) {
-                for (var i=0; i<productLineList.length; i++) {
-                    productLineListTemp.push(productLineList[i].copy());
-                }
-                historyObj = new HistoryObj(
-                    productLineListTemp,
-                    null
-                )
-                this.$store.commit("pushHistoryObjList", historyObj);
-            }
+            this.initHistoryObjList(productLineList, null);
 
             /**
              * 批量减数操作
@@ -232,19 +221,10 @@ export default {
                 });
             });
 
-
             /**
              * 记录历史操作
              */
-            productLineListTemp = [];
-            for (var i=0; i<productLineList.length; i++) {
-                productLineListTemp.push(productLineList[i].copy());
-            }
-            historyObj = new HistoryObj(
-                productLineListTemp,
-                null
-            );
-            this.$store.commit("pushHistoryObjList", historyObj);
+            this.pushHistoryObjList(productLineList, null, null);
             
             // 关闭窗口
             this.hideWindow();
@@ -272,17 +252,20 @@ export default {
         });
         this.msgOfActivedProgressBarList = msgOfActivedProgressBarList;
         this.msgOfActivedProgressBarListForShow = [...this.msgOfActivedProgressBarList];
-
-        /**
-         * 设置详细表格高度
-         */
-        this.tableHeight = window.innerHeight - 2 * CONST.STYLEOFFILTERTABLE.height - 2 * CONST.STYLEOFWINDOW.titleHeight;
     },
     computed: {
         // 源画布
         ctxOfSource: function() {
             return this.$store.state.ctxOfSource;
-        }
+        },
+        // 窗口 css 样式
+		cssOfWindow: function() {
+			return {
+				heightOfTable: window.innerHeight - 2 * CONST.STYLEOFFILTERTABLE.heightOfFilterTable - 2 * CONST.STYLEOFWINDOW.titleHeight,
+				widthOfTable: CONST.STYLEOFWINDOWOFADDPROGRESSBAR.width - 2*CONST.STYLEOFWINDOW.lineWidth,
+				widthOfWindow: CONST.STYLEOFWINDOWOFADDPROGRESSBAR.width + "px"
+			}
+		}
     },
 	components: {
 		"v-filterTable": filterTable
@@ -296,7 +279,6 @@ export default {
 	right: 0;
 	top: 0;
 	bottom: 0;
-	left: 30%;
 	background-color: #fff;
 	border:2px solid #1b72ce; 
 }

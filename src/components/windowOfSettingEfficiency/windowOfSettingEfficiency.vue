@@ -39,7 +39,6 @@
 </template>
 
 <script>
-import HistoryObj from "../../vo/historyObj";
 import DateUtil from "../../common/dateUtil";
 
 export default {
@@ -91,20 +90,9 @@ export default {
             var startTimeStamp = activedProgressBar.getStartTime > timeStampOfToday ? activedProgressBar.getStartTime : timeStampOfToday; // 用于计算结束时间的开始时间节点
 
             /**
-             * 记录历史操作
+             * 记录历史操作（之前没有记录过历史操作，则初始化历史记录快照）
              */
-            var historyObj = null;
-            var productLineListTemp = [];
-            if (this.$store.state.historyObjList.length == 0) {
-                for (var i=0; i<productLineList.length; i++) {
-                    productLineListTemp.push(productLineList[i].copy());
-                }
-                historyObj = new HistoryObj(
-                    productLineListTemp,
-                    null
-                )
-                this.$store.commit("pushHistoryObjList", historyObj);
-            }
+            this.initHistoryObjList(productLineList, null);
 
             /**
              * 自选效率确认后，数据更新（删除进度数据后，重新插入）
@@ -134,15 +122,7 @@ export default {
             /**
              * 记录历史操作
              */
-            productLineListTemp = [];
-            for (var i=0; i<productLineList.length; i++) {
-                productLineListTemp.push(productLineList[i].copy());
-            }
-            historyObj = new HistoryObj(
-                productLineListTemp,
-                null
-            );
-            this.$store.commit("pushHistoryObjList", historyObj);
+            this.pushHistoryObjList(productLineList, null, null);
 
             /**
              * 记录激活的生产线索引对象

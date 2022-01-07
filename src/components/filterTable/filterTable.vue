@@ -1,17 +1,19 @@
-/* FilterTable 组件 */
-/* https://github.com/azhengyongqin/iview-filter-table */
 <template>
   <div class="filterTable-component">
-    <Table border :data="filters" :columns="tableColumnsFilters" stripe></Table>
-    <Table
-      :show-header="false"
-      border
-      :height="tableHeight"
-      :data="data"
-      :columns="columns"
-      @on-row-dblclick="dblclickTable"
-      stripe
-    ></Table>
+    <Table border :data="filters" :columns="tableColumnsFilters" :width="widthOfFilterTable"></Table>
+    <div class="realTable">
+      <Table
+        :show-header="false"
+        border
+        :height="tableHeight"
+        :width="widthOfRealTable"
+        :data="data"
+        :columns="columns"
+        @on-row-dblclick="dblclickTable"
+        @on-selection-change="handleSelectRow"
+        stripe
+      ></Table>
+    </div>
   </div>
 </template>
 
@@ -22,7 +24,8 @@ export default {
   props: {
     columns: Array, //列描述数据对象
     data: Array, //表格数据
-    height: Number, // 详细内容表格高度
+    heightOfRealTable: Number, // 详细内容表格高度
+    widthOfRealTable: Number, // 表格宽度
   },
   data() {
     return {
@@ -32,10 +35,16 @@ export default {
         }
       ],
       tableColumnsFilters: [],
-      search: {} //过滤条件保存的对象,就是保存Input框和Select中值
+      search: {}, //过滤条件保存的对象,就是保存Input框和Select中值
+      widthOfFilterTable: 0
     };
   },
   created() {
+    // 如果超出高度，需要添加滚动条，则需要修正抬头筛选表头的宽度
+    if (this.data.length*CONST.STYLEOFFILTERTABLE.heightOfRow > this.heightOfRealTable) {
+      this.widthOfFilterTable = this.widthOfRealTable - CONST.STYLEOFFILTERTABLE.widthOfScrollBar - 2; // 2 为边线宽度
+    }
+
     for (let index in this.columns) {
       let filter = {};
       //将传入的列描述数据对象(columns) 的title和width 复制给 过滤表的列描述数据对象(tableColumnsFilters)
@@ -142,16 +151,21 @@ export default {
       obj.index = index;
       // 提交，激活父组件事件
       this.$emit("on-row-dblclick", obj);
+    },
+    // 选择表格事件
+    handleSelectRow:function(selection) {
+      // 提交，激活父组件事件
+      this.$emit("on-selection-change", selection);
     }
   },
   computed: {
     tableHeight: function() {
-      if (this.height != 0) {
-        return this.height;
+      if (this.heightOfRealTable != 0) {
+        return this.heightOfRealTable;
       }
       return (
         window.innerHeight -
-        CONST.STYLEOFFILTERTABLE.height -
+        CONST.STYLEOFFILTERTABLE.heightOfFilterTable -
         2 * CONST.STYLEOFWINDOW.titleHeight
       );
     }
@@ -159,5 +173,9 @@ export default {
 };
 </script>
 
-<style scoped>
+<style>
+.filterTable-component .realTable .ivu-table-cell {
+  padding-left: 5px;
+  padding-right: 5px;
+}
 </style>

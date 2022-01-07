@@ -31,7 +31,7 @@
             title="删除排产进度"
             @on-ok="deleteProgress"
             @on-cancel="hideDeleteModel">
-            <p>是否删除该排产进度，确定删除后将无法撤回删除！！</p>
+            <p>是否删除该排产进度？</p>
         </Modal>
         <Modal
             v-model="isShowRemoveGapModel"
@@ -45,7 +45,6 @@
 
 <script>
 import CONST from "../../common/const";
-import HistoryObj from "../../vo/historyObj";
 
 export default {
     data: function() {
@@ -113,40 +112,38 @@ export default {
             this.$store.commit("closeAllWindow");
             this.$store.commit("setIsShowWindowOfSettingEfficiency", true);
         },
-        // 确认输出排产进度条
+        // 确认删除排产进度条
         deleteProgress: function() {
             this.isShowDeleteModel = false;
-            this.$store.commit("setIsLoading", true);
             var activedProgressBar = this.activedProgressBar;
-            var that = this;
-            this.axios.get(this.seieiURL + "productionplanningdetail/resetProgress?id=" + this.activedProgressBar.getId).then((response) => {
-                if (response.data.status) {
-                    that.$store.commit("setIsLoading", false);
-                    that.$Message.error(response.data.msg);
-                    that.isInvaildSession(response.data.status);
-                } else {
-                    var productLineList = that.productLineList;
-                    productLineList[activedProgressBar.getProductLineIndex].removeProgressById(activedProgressBar.getId);
-                    productLineList[activedProgressBar.getProductLineIndex].clear(that.ctxOfSource);
-                    productLineList[activedProgressBar.getProductLineIndex].renderWithOutIdList(that.ctxOfSource, that.colorSetting, null, null);
-                    that.$store.commit("setProductLineList", productLineList);
-                    // 异步变同步
-                    (async function() {
-                        await that.getAllForAddProgress(); // await 后要接 promise 对象，所以函数要 return
-                        that.$store.commit("setIsLoading", false);
-                    })();
-                    // 清空历史
-                    that.$store.commit("setHistoryObjList", []);
-                    that.$store.commit("setActivedIndexOfHistoryObjList", null);
-                }
-            }).catch((error) => {
-                that.$store.commit("setIsLoading", false);
-                that.$Message.error({
-                  content: "服务器异常,请刷新！！",
-                  duration: 0,
-                  closable: true
-                });
-                console.log(error);
+            var productLineList = this.productLineList;
+            var activedProductLine = productLineList[activedProgressBar.getProductLineIndex]; // 激活进度条所在的生产线
+            /**
+             * 记录历史操作（之前没有记录过历史操作，则初始化历史记录快照）
+             */
+            this.initHistoryObjList(productLineList, null);
+
+            // 删除数据
+            productLineList[activedProgressBar.getProductLineIndex].removeProgressById(activedProgressBar.getId);
+            productLineList[activedProgressBar.getProductLineIndex].clear(this.ctxOfSource);
+            productLineList[activedProgressBar.getProductLineIndex].renderWithOutIdList(this.ctxOfSource, this.colorSetting, null, null);
+            this.$store.commit("setProductLineList", productLineList);
+
+            // 记录历史操作
+            // 如果删除进度条是拆单而自动生成的进度条
+            if ((activedProgressBar.getId + "").indexOf(CONST.PREFIXOFPROGRESSBARID.NEW) != -1) {
+                // 无需录入删除 ID
+                this.pushHistoryObjList(productLineList, null, null);
+            } else {
+                // 需要录入删除 ID
+                this.pushHistoryObjList(productLineList, null, CONST.PREFIXOFPROGRESSBARID.LOGICALLYDELETE + activedProgressBar.getId);
+            }
+            /**
+             * 记录激活的生产线索引对象
+             */
+            this.$store.commit("addActivedObjListOfProductLine", {
+                productLineIndex: activedProgressBar.getProductLineIndex,
+                progressBarIndex: null
             });
         },
         // 消除时间空隙
@@ -157,20 +154,10 @@ export default {
             var activedProgressBarIndex = activedProductLine.getProgressIndexById(activedProgressBar.getId); // 激活排产进度在生产线的索引
             var progressList = activedProductLine.getProgressList;
             /**
-             * 记录历史操作
+             * 记录历史操作（之前没有记录过历史操作，则初始化历史记录快照）
              */
-            var historyObj = null;
-            var productLineListTemp = [];
-            if (this.$store.state.historyObjList.length == 0) {
-                for (var i=0; i<productLineList.length; i++) {
-                    productLineListTemp.push(productLineList[i].copy());
-                }
-                historyObj = new HistoryObj(
-                    productLineListTemp,
-                    null
-                );
-                this.$store.commit("pushHistoryObjList", historyObj);
-            }
+            this.initHistoryObjList(productLineList, null);
+
             // 消除间隙操作
             for (var i=activedProgressBarIndex+1; i<progressList.length; i++) {
                 // 如果没有重叠
@@ -186,15 +173,7 @@ export default {
             /**
              * 记录历史操作
              */
-            productLineListTemp = [];
-            for (var i=0; i<productLineList.length; i++) {
-                productLineListTemp.push(productLineList[i].copy());
-            }
-            historyObj = new HistoryObj(
-                productLineListTemp,
-                null
-            );
-            this.$store.commit("pushHistoryObjList", historyObj);
+            this.pushHistoryObjList(productLineList, null, null);
 
             /**
              * 记录激活的生产线索引对象

@@ -1,9 +1,9 @@
 <template>
     <div class="windowOfAddProgress-component">
         <!-- 右侧显示窗口按钮 -->
-		<div class="windowOfAddProgress zIndexSuperTop window">
+		<div class="windowOfAddProgress zIndexSuperTop window" ref="windowOfAddProgressComponent" v-bind:style="{width: cssOfWindow.widthOfWindow}">
             <div class="header">
-                <div class="txt">添 加 排 产</div>
+                <div class="txt" @mousedown="mouseDown">添 加 排 产</div>
                 <div class="closeBtn" @click="hideWindow">
                     <Icon type="ios-close-circle" />
                 </div>
@@ -11,10 +11,12 @@
 			<!-- 表格 -->
 			<v-filterTable
 				@on-row-dblclick="dragProgress"
+				@on-selection-change="handleSelectRow"
 				@on-search="filterData"
 				:data="waitingAddProgressListForShow"
                 :columns="tableColumns"
-				:height="0">
+				:heightOfRealTable="cssOfWindow.heightOfTable"
+				:widthOfRealTable="cssOfWindow.widthOfTable">
 			</v-filterTable>
 		</div>
     </div>
@@ -31,6 +33,12 @@ export default {
         return {
 			tableColumns: [
 				{
+					title: '#',
+                	type:'selection',
+                    width: 60,
+                    align: 'center'
+         		},
+				{
                 	title: '制单号',
                 	key: 'orderno',
                 	align: "center",
@@ -40,7 +48,7 @@ export default {
 			  	},
 				{
                 	title: '客户',
-                	key: 'clientName',
+                	key: 'clientname',
                 	align: "center",
             		filter: {
               			type: 'Input'
@@ -50,6 +58,7 @@ export default {
                 	title: '产品分类',
                 	key: 'style',
                 	align: "center",
+                    width: 120,
             		filter: {
               			type: 'Input'
             		}
@@ -58,6 +67,7 @@ export default {
                 	title: '款式分类',
                 	key: 'productStyleName',
                 	align: "center",
+                    width: 100,
             		filter: {
               			type: 'Input'
             		}
@@ -66,6 +76,7 @@ export default {
                 	title: 'SAH',
                 	key: 'sah',
                 	align: "center",
+                    width: 100,
             		filter: {
               			type: 'Input'
             		}
@@ -75,6 +86,7 @@ export default {
                 	key: 'qtyofbatcheddelivery',
                 	align: "center",
                     sortable: true,
+                    width: 100,
             		filter: {
               			type: 'Input'
             		}
@@ -83,6 +95,7 @@ export default {
                 	title: '离厂日期',
                 	key: 'deliveryoffactoryTime',
 					align: "center",
+                    width: 120,
             		filter: {
               			type: 'Input'
             		},
@@ -103,7 +116,9 @@ export default {
 		// 窗口 css 样式
 		cssOfWindow: function() {
 			return {
-				top: CONST.STYLEOFTOOLBAR.height + CONST.STYLEOFTOOLBAR.lineWidth
+				heightOfTable: 0.5*(window.innerHeight - (CONST.STYLEOFTOOLBAR.height + CONST.STYLEOFTOOLBAR.lineWidth)),
+				widthOfTable: CONST.STYLEOFWINDOWOFADDPROGRESSBAR.width - 2*CONST.STYLEOFWINDOW.lineWidth,
+				widthOfWindow: CONST.STYLEOFWINDOWOFADDPROGRESSBAR.width + "px"
 			}
 		}
 	},
@@ -115,7 +130,6 @@ export default {
 		// 表格双击添加进度条，由子组件传递激活
 		dragProgress: function(obj) {
 			var data = obj.data;
-			var index = obj.index
 			var progressBar = new ProgressBar(
 				null,
 				null,
@@ -142,7 +156,20 @@ export default {
 				waitingAddProgressListForShow = waitingAddProgressListForShowTemp;
 			});
 			this.waitingAddProgressListForShow = waitingAddProgressListForShow;
-		}
+		},
+		// 勾选表格事件
+		handleSelectRow(selectionList) {
+			// 用于智能排产
+			// 保存数据到 vue-x
+			if (selectionList.length > 0) {
+				this.$store.commit("setSelectedWaitingAddProgressLis", selectionList);
+			}
+		},
+        // 点击标题栏，拖动
+        mouseDown: function() {
+            this.$store.commit("setIsShowBackgroundForDrawWindow", true);
+            this.$store.commit("setDomOfDragWindow", this.$refs["windowOfAddProgressComponent"]);
+        }
 	},
 	created: function() {
 		this.waitingAddProgressList = this.$store.state.waitingAddProgressList;
@@ -158,9 +185,7 @@ export default {
 .windowOfAddProgress {
 	position: fixed;
 	right: 0;
-	top: 0;
-	bottom: 0;
-	left: 30%;
+	top: 100px;
 	background-color: #fff;
 	border:2px solid #1b72ce;
 }

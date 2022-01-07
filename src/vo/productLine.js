@@ -150,6 +150,22 @@ export default class ProductLine {
     }
 
     /**
+     * 获取该生产线内最晚的结束时间戳（不一定是最后一条进度条），如果没有进度条，则默认返回 今天的 0点0分0秒
+     */
+    getTheLastTimeStamp() {
+        var progressList = this.getProgressList;
+        if (progressList.length == 0) {
+            return DateUtil.getTimeStampOfToday;
+        } else {
+            var timeStamp = 0;
+            for (var progressBarIndex=0; progressBarIndex<this.progressList.length; progressBarIndex++) {
+                timeStamp = timeStamp < this.progressList[progressBarIndex].getEndTime ? this.progressList[progressBarIndex].getEndTime : timeStamp;
+            }
+            return timeStamp;
+        }
+    }
+
+    /**
      * 根据进度条 id 删除对应的进度条
      * @param {*} id 进度条的 id
      */
@@ -366,30 +382,16 @@ export default class ProductLine {
         return this.getProgressIndexById(progressBarOfInsert.getId) + "";
     }
 
-
-
     /**
      * 从生产线最后插入进度条
      * @param {*} progressBarOfInsert 进度条对象
      * @param {*} factoryCalendar 工厂日历
      */
     addProgressInTheEnd(progressBarOfInsert, factoryCalendar) {
-        // 检查该生产线是否有排产进度列表，如果为空，则插入的生产线的开始时间默认为今天的 0点0分0秒
-        if (this.progressList.length == 0) {
-            var now = DateUtil.getTimeStampOfToday;
-            progressBarOfInsert.reload(this, factoryCalendar, now);
-            this.progressList.push(progressBarOfInsert);
-            return;
-        }
-        // 否则循环进度条列表，取最晚结束的时间作为新增的开始时间
-        else {
-            var startTimeStamp = 0;
-            for (var progressBarIndex=0; progressBarIndex<this.progressList.length; progressBarIndex++) {
-                startTimeStamp = startTimeStamp < this.progressList[progressBarIndex].getEndTime ? this.progressList[progressBarIndex].getEndTime : startTimeStamp;
-            }
-            progressBarOfInsert.reload(this, factoryCalendar, startTimeStamp);
-            this.progressList.push(progressBarOfInsert);
-        }
+        var startTimeStamp = this.getTheLastTimeStamp();
+        progressBarOfInsert.reload(this, factoryCalendar, startTimeStamp);
+        this.progressList.push(progressBarOfInsert);
+        return this.progressList.length - 1; // 返回进度条当前的索引
     }
 
     /**
@@ -480,24 +482,62 @@ export default class ProductLine {
         return productionLine;
     }
 
-    // 获取上锁时间戳
+    // 获取上锁状态，若上锁了某条进度条，则返回该进度条的id
     get getIdOfLock() {
         return this.idOfLock;
     }
 
     /**
-     * 设置上锁时间戳
-     * @param {*} idOfLock 
+     * 解锁当前生产线某个进度条开始以后的进度条
+     * @param {*} idOfLock 进度条的id
      */
     unLock(idOfLock) {
         this.idOfLock = idOfLock;
     }
 
-    // 全部上锁
+    // 当前生产线全部上锁
     lock() {
         this.idOfLock = CONST.STATUSOFLOCK.LOCK;
     }
     
+    /**
+     * 用于判断一条进度条基于当前上述的状态是否可以操作
+     * 具体逻辑是获取该进度条与上锁了的进度条的比较
+     * 若返回 false，则表示可以操作，反之则表示不可以操作
+     * @param {*} timeStampOfCompare 比较进度条
+     */
+    checkLockStatusByTimeStamp(timeStampOfCompare) {
+        var progressBarOfLock;
+        /** 当前生产线没有上锁 */
+        if (this.idOfLock == CONST.STATUSOFLOCK.UNLOCK)
+        {
+            return true;
+        }
+        /** 当前生产线全部上锁 */
+        else if (this.idOfLock == CONST.STATUSOFLOCK.LOCK)
+        {
+            var lengthOfProgressList = this.progressList.length;
+            // 当前生产线没有进度条
+            if (lengthOfProgressList == 0) {
+                return true;
+            } else {
+                // 默认最后一条进度条作为比较
+                progressBarOfLock = this.progressList[lengthOfProgressList-1];
+            }
+        }
+        /** 部分解锁 */
+        else {
+            // 获取上锁的进度条
+            progressBarOfLock = this.getProgressById(this.idOfLock);
+        }
+        // 比较时间戳
+        if (progressBarOfLock.getStartTime >= timeStampOfCompare)
+        {
+            return false;
+        }
+        return true;
+    }
+
     // 根据开始时间排序 计划列表
     sortProgressList() {
         var progressList = this.progressList.sort((a, b) => {
