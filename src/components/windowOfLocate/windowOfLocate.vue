@@ -1,25 +1,22 @@
 <template>
-    <div class="windowOfBatchMinus-component">
-        <!-- 右侧批量减数窗口 -->
-        <div class="windowOfBatchMinus zIndexSuperTop window" v-bind:style="{width: cssOfWindow.widthOfWindow}">
+    <div class="windowOfLocate-component">
+        <!-- 定位窗口 -->
+        <div class="windowOfLocate zIndexSuperTop window" ref="windowOfLocateComponent" v-bind:style="{width: cssOfWindow.widthOfWindow}">
             <div class="header">
-                <div class="txt">批 量 减 数</div>
+                <div class="txt" @mousedown="mouseDown">定 位</div>
                 <div class="closeBtn" @click="hideWindow">
                     <Icon type="ios-close-circle" />
                 </div>
             </div>
 			<!-- 表格 -->
 			<v-filterTable
-				@on-row-dblclick="dblclick"
+				@on-row-dblclick="locateBar"
 				@on-search="filterData"
 				:data="msgOfActivedProgressBarListForShow"
                 :columns="tableColumns"
                 :heightOfRealTable="cssOfWindow.heightOfTable"
 				:widthOfRealTable="cssOfWindow.widthOfTable">
 			</v-filterTable>
-            <div class="btn" @click="submitChange">
-                确 认 修 改
-            </div>
         </div>
     </div>
 </template>
@@ -28,6 +25,7 @@
 import filterTable from "../filterTable/filterTable";
 import DateUtil from "../../common/dateUtil";
 import CONST from "../../common/const";
+import ProgressBar from "../../vo/progressBar";
 
 export default {
     data: function() {
@@ -69,25 +67,9 @@ export default {
                 	title: '已完成数',
                 	key: 'qtyFinish',
                     align: "center",
-                    render: function(h, params) {
-                        return h(
-                            'InputNumber',
-                            {
-                                props: {
-                                    max: params.row.qtyofbatcheddelivery, // 最大值
-                                    min: 0, // 最小值
-                                    value: params.row.qtyFinish, // 默认值
-                                },
-                                on: {
-                                    "on-change": val => {
-                                        // 减数
-                                        params.row.qtyFinish = val;
-                                        self.hadChangedMsgOfActivedProgressBarList.push(params.row); // 使用 self 代替 this
-                                    }
-                                }
-                            },
-                        )
-                    }
+            		filter: {
+              			type: 'Input'
+            		}
 			  	},
 				{
                 	title: '产品分类',
@@ -140,15 +122,88 @@ export default {
             ]
         }
     },
+	computed: {
+		ctxOfSource: function() {
+			return this.$store.state.ctxOfSource;
+		},
+		colorSetting: function() {
+			return this.$store.state.colorSetting;
+		},
+		productLineList: function() {
+			return this.$store.state.productLineList;
+		}
+	},
     methods: {
         // 关闭窗口
         hideWindow: function() {
-            this.$store.commit("setIsShowWindowOfBatchMinus", false);
+            this.$store.commit("setIsShowWindowOfLocate", false);
         },
         // 双击表格
-        dblclick: function() {
-            return;
-        },
+        locateBar: function(obj) {
+			
+            var ctxOfSource = this.$store.state.ctxOfSource;
+            var colorSetting = this.$store.state.colorSetting;
+			var orderno = obj.data.orderno;
+			var activeedProgressBar = new ProgressBar(
+				obj.productLineId,
+				obj.productLineIndex,
+				obj.data
+			);
+
+			// 清空之前选择激活进度条的状态(包括相同制单号引起的激活状态)
+            this.clearActivedProgressBar();
+
+			var progressBarListOfTheSameOrderNo = [];
+            // 查找所有生产线中相同制单的进度条，并高亮
+            for (var indexOfProductLineList=0; indexOfProductLineList<this.productLineList.length; indexOfProductLineList++) {
+                var productLine = this.productLineList[indexOfProductLineList];
+                // 循环该生产线的进度条
+                for (var indexOfProgressBar=0; indexOfProgressBar<productLine.getProgressList.length; indexOfProgressBar++) {
+                    var progressBar = productLine.getProgressList[indexOfProgressBar];
+                    if (progressBar.msgOfProgressBar.orderno == orderno) {
+                        var isExistIngProgressBarListOfTheSameOrderNo = false;
+                        // 循环列表，检查是否已存在当前进度条的生产线
+                        for (var indexOfProgressBarListOfTheSameOrderNo=0; indexOfProgressBarListOfTheSameOrderNo<progressBarListOfTheSameOrderNo.length; indexOfProgressBarListOfTheSameOrderNo++) {
+                            var itemOfProgressBarListOfTheSameOrderNo = progressBarListOfTheSameOrderNo[indexOfProgressBarListOfTheSameOrderNo];
+                            if (itemOfProgressBarListOfTheSameOrderNo.productLineIndex == productLine.getIndex) {
+                                isExistIngProgressBarListOfTheSameOrderNo = true;
+                                itemOfProgressBarListOfTheSameOrderNo.progressBarList.push(progressBar);
+                            }
+                        }
+                        // 如果当前进度条的生产线不存在于存储列表中，新增并添加
+                        if (!isExistIngProgressBarListOfTheSameOrderNo) {
+                            var msgObjOfProgressBarListOfTheSameOrderNo = {};
+                            msgObjOfProgressBarListOfTheSameOrderNo.productLineIndex = productLine.getIndex;
+                            msgObjOfProgressBarListOfTheSameOrderNo.progressBarList = [progressBar];
+                            progressBarListOfTheSameOrderNo.push(msgObjOfProgressBarListOfTheSameOrderNo);
+                        }
+                    }
+                }
+            }
+            this.$store.commit("setProgressBarListOfTheSameOrderNo", progressBarListOfTheSameOrderNo);
+
+			// 渲染相同制单号的进度条
+            for (var indexOfProgressBarListOfTheSameOrderNo=0; indexOfProgressBarListOfTheSameOrderNo < progressBarListOfTheSameOrderNo.length; indexOfProgressBarListOfTheSameOrderNo++) {
+                var itemOfProgressBarListOfTheSameOrderNo = progressBarListOfTheSameOrderNo[indexOfProgressBarListOfTheSameOrderNo];
+                // 获取生产线
+                var productLineItem = this.productLineList[itemOfProgressBarListOfTheSameOrderNo.productLineIndex];
+                var progressIndexList = []; // 需要激活的进度条的索引列表
+                // 组装进度条的索引列表
+                for (indexOfProgressBar=0; indexOfProgressBar<itemOfProgressBarListOfTheSameOrderNo.progressBarList.length; indexOfProgressBar++) {
+                    var progressBarItem = itemOfProgressBarListOfTheSameOrderNo.progressBarList[indexOfProgressBar];
+                    progressIndexList.push(productLineItem.getProgressIndexById(progressBarItem.getId));
+                }
+                // 重新渲染
+                productLineItem.clear(ctxOfSource);
+                productLineItem.renderWithOutIdList(ctxOfSource, colorSetting, null, progressIndexList);
+            }
+        
+			// 页面滚动聚焦到激活进度条
+			var left = activeedProgressBar.msgOfCSS.left < 0 ? 0 : activeedProgressBar.msgOfCSS.left;
+			window.scroll(left, window.pageYOffset);
+			this.$store.commit("scrollRightOrLeft");
+		
+		},
         // 筛选数据
         filterData: function(searchObj) {
 			// 获取筛选数据的属性名
@@ -167,67 +222,10 @@ export default {
 			});
 			this.msgOfActivedProgressBarListForShow = msgOfActivedProgressBarListForShow;
         },
-        // 确认减数
-        submitChange: function() {
-            // 修改过后的进度条详情数据列表
-            var hadChangedMsgOfActivedProgressBarList = this.hadChangedMsgOfActivedProgressBarList.sort((a, b) => {
-                return a.startTime - b.startTime;
-            });
-            var productLineList = this.productLineList;
-            var argumentSetting = this.$store.state.argumentSetting; // 参数设置
-
-            /**
-             * 记录历史操作（之前没有记录过历史操作，则初始化历史记录快照）
-             */
-            this.initHistoryObjList(productLineList, null);
-
-            /**
-             * 批量减数操作
-             */
-            hadChangedMsgOfActivedProgressBarList.forEach((msgOfActivedProgressBar) => {
-                var activedProductLine = productLineList[msgOfActivedProgressBar.productLineIndex]; // 激活生产线
-                var activedProgressBar = activedProductLine.getProgressById(msgOfActivedProgressBar.id); // 激活进度条
-                var activedProgressBarIndex = activedProductLine.getProgressIndexById(activedProgressBar.getId); // 计划进度索引
-                var timeStampOfToday = DateUtil.getTimeStampOfToday;
-                activedProgressBar.minus(activedProductLine, this.factoryCalendar, msgOfActivedProgressBar.qtyFinish, timeStampOfToday);
-
-                // 如果设置减数后顺延
-                if (argumentSetting.getAfterMinusHasamend) {
-                    activedProductLine.removeProgressById(activedProgressBar.getId);
-                    activedProductLine.addProgressWithOutAmendAtFirst(activedProgressBar, this.factoryCalendar)
-                }
-                
-                
-                if (argumentSetting.getIsRemoveGapModelAfterMinusOrChangeEfficiency) {
-                    // 消除间隙操作
-                    var progressList = activedProductLine.getProgressList;
-                    for (var i=activedProgressBarIndex+1; i<progressList.length; i++) {
-                        // 如果没有重叠
-                        if (progressList[i-1].getEndTime < progressList[i].getStartTime) {
-                            progressList[i].reload(activedProductLine, this.factoryCalendar, progressList[i-1].getEndTime); // 消除间隙
-                        }
-                    }
-                }
-                // 重新渲染
-                activedProductLine.clear(this.ctxOfSource);
-                activedProductLine.renderWithOutIdList(this.ctxOfSource, this.colorSetting, null, []);
-
-                /**
-                 * 记录激活的生产线索引对象
-                 */
-                this.$store.commit("addActivedObjListOfProductLine", {
-                    productLineIndex: activedProgressBar.getProductLineIndex,
-                    progressBarIndex: activedProgressBarIndex
-                });
-            });
-
-            /**
-             * 记录历史操作
-             */
-            this.pushHistoryObjList(productLineList, null, null);
-            
-            // 关闭窗口
-            this.hideWindow();
+        // 点击标题栏，拖动
+        mouseDown: function() {
+            this.$store.commit("setIsShowBackgroundForDrawWindow", true);
+            this.$store.commit("setDomOfDragWindow", this.$refs["windowOfLocateComponent"]);
         }
     },
     created: function() {
@@ -274,13 +272,12 @@ export default {
 </script>
 
 <style scoped>
-.windowOfBatchMinus {
+.windowOfLocate {
 	position: fixed;
 	right: 0;
-	top: 0;
-	bottom: 0;
+	top: 100px;
 	background-color: #fff;
-	border:2px solid #1b72ce; 
+	border:2px solid #1b72ce;
 }
 .btn {
     margin: auto;

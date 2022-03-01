@@ -117,7 +117,7 @@ export default {
              * 重新渲染
              */
             activedProductLine.clear(this.ctxOfSource); // 清空图层
-            activedProductLine.renderWithOutIdList(this.ctxOfSource, this.colorSetting, null, null); // 渲染生产线
+            activedProductLine.renderWithOutIdList(this.ctxOfSource, this.colorSetting, null, []); // 渲染生产线
 
             /**
              * 记录历史操作

@@ -171,7 +171,6 @@ export default {
         this.activedProgressBar = this.$store.state.activedProgressBar;
         this.msgOfProgressbar = this.activedProgressBar.getMsgOfProgressBar;
         this.activedProductLine = this.$store.state.productLineList[this.activedProgressBar.getProductLineIndex];
-        console.log(this.activedProductLine);
     },
     methods: {
         // 隐藏窗口

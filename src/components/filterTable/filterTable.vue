@@ -9,6 +9,7 @@
         :width="widthOfRealTable"
         :data="data"
         :columns="columns"
+        :loading="loading"
         @on-row-dblclick="dblclickTable"
         @on-selection-change="handleSelectRow"
         stripe
@@ -26,6 +27,7 @@ export default {
     data: Array, //表格数据
     heightOfRealTable: Number, // 详细内容表格高度
     widthOfRealTable: Number, // 表格宽度
+    loading: Boolean // 是否为 loading 状态
   },
   data() {
     return {

@@ -2,7 +2,6 @@ import DateUtil from "../common/dateUtil";
 import CONST from "../common/const";
 import M2V from "../common/M2V";
 import StrUtil from "../common/strUtil";
-import Const from "../common/const";
 
 // 进度条类
 export default class ProgressBar {
@@ -48,7 +47,7 @@ export default class ProgressBar {
     }
 
     // 获取所在生产线的 id
-    get geProductLineId() {
+    get getProductLineId() {
         return this.productionLineId;
     }
 
@@ -60,6 +59,11 @@ export default class ProgressBar {
     // 返回产品效率
     get getEfficiencyOfClass() {
         return this.efficiencyOfClass;
+    }
+
+    // 返回批注
+    get getMemo() {
+        return this.msgOfProgressBar.memo;
     }
 
     /**
@@ -80,6 +84,14 @@ export default class ProgressBar {
             return 0;
         }
         return this.efficiencyBySetting;
+    }
+
+    /**
+     * 设置批注
+     * @param {*} memo 批注
+     */
+    setMemo(memo) {
+        this.msgOfProgressBar.memo = memo;
     }
 
     /**
@@ -148,6 +160,17 @@ export default class ProgressBar {
             return dailyMakingForComputed;
         }
         return this.getDailyMaking(productLine, startTime);
+    }
+
+    /**
+     * 设置了工作人数，工作时间，默认效率为1，从而获取对应的日产（用于由离厂日期推算开始日期）
+     * @param {*} argumentSetting 参数对象
+     * @param {*} msgOfProgressBar 排产信息
+     */
+    static getDailyMakingByDefaultSetting(argumentSetting, msgOfProgressBar) {
+        var peopleNum = argumentSetting.getPeopleNum;
+        var workHours = argumentSetting.getWorkhours;
+        return (peopleNum * workHours * 60)/msgOfProgressBar.sam;
     }
 
     // 获取开启时间
@@ -227,7 +250,13 @@ export default class ProgressBar {
      */
     setQtyofbatcheddelivery(productLine, factoryCalendar, qtyofbatcheddelivery) {
         this.qtyofbatcheddelivery = qtyofbatcheddelivery;
-        this.setEndTime(productLine, factoryCalendar, this.startTime);
+        var now = DateUtil.getTimeStampOfToday;
+        // 如果当前日期比 进度条的开始日期 要晚，则以当前日期作为计算基准
+        if (now > this.startTime) {
+            this.setEndTime(productLine, factoryCalendar, now);
+        } else {
+            this.setEndTime(productLine, factoryCalendar, this.startTime);
+        }
     }
 
     /**
@@ -271,12 +300,13 @@ export default class ProgressBar {
         var qtyNeedDone = this.qtyofbatcheddelivery - this.qtyFinish; // 尚未做完的工作量
         var dailyMakingForComputed = this.getDailyMakingForComputed(productLine, startTime); // 获取日产值
 
-        // 规定前三天的效率只有 50%，即日产只有正常的一半
-        var dayCountForLowEfficiency = 3; // 前多少天的效率是低的
+        // 规定前三天的效率只能低效率，即 日产 = 正常日产*低效率
+        var dayCountForLowEfficiency = CONST.DAYCOUNTFORLOWEFFICIENCY; // 前多少天的效率是低的
         var LowEfficiency = this.prophaseLowEfficiencyOfClass; // 刚开始天数的低效率值
         var now = DateUtil.getTimeStampOfToday; // 今天时间
         var timeStampOfEndLowEfficiency = this.getStartTime + dayCountForLowEfficiency * DateUtil.timeStampOfOneDay; // 效率恢复正常时日期的时间戳
         // 当前还有多少天工作日是低效率的
+        console.log(DateUtil.timeStampsToDayCount(now, timeStampOfEndLowEfficiency));
         var remainDayCountLowEfficiency = DateUtil.timeStampsToDayCount(now, timeStampOfEndLowEfficiency) > dayCountForLowEfficiency ? dayCountForLowEfficiency : DateUtil.timeStampsToDayCount(now, timeStampOfEndLowEfficiency);
         // 如果在低效率的这些工作日内就完成了工作
         if (qtyNeedDone < remainDayCountLowEfficiency * dailyMakingForComputed * LowEfficiency) {
@@ -295,6 +325,32 @@ export default class ProgressBar {
         var endTime = startTime + Math.ceil(dayCount*DateUtil.timeStampOfOneDay);
         endTime = factoryCalendar.getEndTime(startTime, endTime);
         this.endTime = endTime;
+    }
+
+    /**
+     * 设置了工作人数，工作时间，默认效率为1，由离厂日期推算开始日期
+     * @param {*} argumentSetting 参数对象
+     * @param {*} factoryCalendar 日历对象
+     * @param {*} msgOfProgressBar 排产信息
+     * @returns 
+     */
+    static calculateStartTimeByEndTimeAndDefaultSetting(argumentSetting, factoryCalendar, msgOfProgressBar) {
+        var dayCount = 0; // 需求天数
+        var qtyNeedDone = msgOfProgressBar.qtyofbatcheddelivery;
+        var dailyMaking = ProgressBar.getDailyMakingByDefaultSetting(argumentSetting, msgOfProgressBar);
+        var dayCountForLowEfficiency = CONST.DAYCOUNTFORLOWEFFICIENCY; // 前多少天的效率是低的
+        var LowEfficiency = msgOfProgressBar.prophaseLowEfficiencyOfClass; // 刚开始天数的低效率值
+        // 如果在低效率的这些工作日内就完成了工作
+        if (qtyNeedDone < dayCountForLowEfficiency * dailyMaking * LowEfficiency) {
+            dayCount = qtyNeedDone/(dailyMaking * LowEfficiency);
+        }
+        // 在低效率的这些工作日内未能完成了工作
+        else
+        {
+            dayCount = dayCountForLowEfficiency + (qtyNeedDone - dayCountForLowEfficiency * dailyMaking * LowEfficiency)/dailyMaking;
+        }
+        dayCount = Math.ceil(dayCount)
+        return DateUtil.timeStampToDate(factoryCalendar.getStartTime(msgOfProgressBar.deliveryoffactoryTime, dayCount));
     }
 
      /**
@@ -344,6 +400,26 @@ export default class ProgressBar {
     }
 
     /**
+     * 给予 x,y 坐标，检测是否在该进度条右上角的 memo 三角形范围内
+     * @param {*} x 
+     * @param {*} y 
+     */
+    isInMemoArea(x, y) {
+        if (this.msgOfCSS.width < CONST.STYLEOFPROGRESSBAR.widthOfMemoIcon) {
+            return false;
+        }
+        // 检查 x 轴
+        if ((this.msgOfCSS.left + this.msgOfCSS.width - CONST.STYLEOFPROGRESSBAR.widthOfMemoIcon) <= x && x <= (this.msgOfCSS.width + this.msgOfCSS.left)) {
+            // 检查 y 轴
+            if (this.msgOfCSS.top <= y && y <= (this.msgOfCSS.top + CONST.STYLEOFPROGRESSBAR.widthOfMemoIcon)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+    /**
      * 复制 进度计划
      */
     copy() {
@@ -359,6 +435,7 @@ export default class ProgressBar {
             that.productionLineId,
             msgOfProgressBar
         );
+        progressBar.setParentId(this.getParentId); // 设置原拆单的进度条 ID
         return progressBar;
     }
 
@@ -405,7 +482,7 @@ export default class ProgressBar {
         ctx.stroke();
         ctx.closePath();
         // 渲染白色背景
-        ctx.fillStyle = "#fff";
+        ctx.fillStyle = isActived ? colorSetting.getSelectedColor : "#fff";
         ctx.fillRect(0, 0, width, CONST.STYLEOFPROGRESSBAR.height);
         // 渲染百分比进度条
         ctx.fillStyle = "#ddd";
@@ -419,7 +496,7 @@ export default class ProgressBar {
         ctx.fillStyle = "#fff";
         ctx.font =  CONST.STYLEOFPROGRESSBAR.fontStyle;
         ctx.textBaseline = "top";
-        ctx.fillText(StrUtil.decimalToPercent(this.getPercentOfQuantityOfWork), CONST.STYLEOFPROGRESSBAR.paddingLeft, CONST.STYLEOFPROGRESSBAR.height/2+Const.STYLEOFPROGRESSBAR.lineWidth, (width - 2*CONST.STYLEOFPROGRESSBAR.paddingLeft));
+        ctx.fillText(StrUtil.decimalToPercent(this.getPercentOfQuantityOfWork), CONST.STYLEOFPROGRESSBAR.paddingLeft, CONST.STYLEOFPROGRESSBAR.height/2+CONST.STYLEOFPROGRESSBAR.lineWidth, (width - 2*CONST.STYLEOFPROGRESSBAR.paddingLeft));
         // 渲染制单号文本
         ctx.fillStyle = "#444";
         ctx.fillText(this.msgOfProgressBar.orderno, CONST.STYLEOFPROGRESSBAR.paddingLeft, CONST.STYLEOFPROGRESSBAR.lineWidth, (width - 2*CONST.STYLEOFPROGRESSBAR.paddingLeft));
@@ -428,7 +505,18 @@ export default class ProgressBar {
         var text = ctx.measureText(this.dayNumOfRemain); // 获取文本渲染对象
         var textWidth = text.width; // 获取文本的渲染长度
         if (width > textWidth + CONST.STYLEOFPROGRESSBAR.paddingLeft) {
-            ctx.fillText(this.dayNumOfRemain, width - textWidth - CONST.STYLEOFPROGRESSBAR.paddingLeft, CONST.STYLEOFPROGRESSBAR.height/2+Const.STYLEOFPROGRESSBAR.lineWidth);
+            ctx.fillText(this.dayNumOfRemain, width - textWidth - CONST.STYLEOFPROGRESSBAR.paddingLeft, CONST.STYLEOFPROGRESSBAR.height/2+CONST.STYLEOFPROGRESSBAR.lineWidth);
+        }
+        // 渲染批注标志
+        if (this.getMemo != null && this.getMemo != "" && width > CONST.STYLEOFPROGRESSBAR.widthOfMemoIcon) {
+            ctx.beginPath();
+            ctx.fillStyle = '#ed4014';
+            ctx.moveTo(width - CONST.STYLEOFPROGRESSBAR.widthOfMemoIcon, 0);
+            ctx.lineTo(width, 0);
+            ctx.lineTo(width, CONST.STYLEOFPROGRESSBAR.widthOfMemoIcon);
+            ctx.lineTo(width - CONST.STYLEOFPROGRESSBAR.widthOfMemoIcon, 0);
+            ctx.fill();
+            ctx.closePath();
         }
         ctx.restore();
     }
@@ -484,7 +572,7 @@ export default class ProgressBar {
         ctx.fillStyle = "#fff";
         ctx.font =  CONST.STYLEOFPROGRESSBAR.fontStyle;
         ctx.textBaseline = "top";
-        ctx.fillText(StrUtil.decimalToPercent(this.getPercentOfQuantityOfWork), CONST.STYLEOFPROGRESSBAR.paddingLeft, CONST.STYLEOFPROGRESSBAR.height/2+Const.STYLEOFPROGRESSBAR.lineWidth, (msgOfCSS.width - 2*CONST.STYLEOFPROGRESSBAR.paddingLeft))
+        ctx.fillText(StrUtil.decimalToPercent(this.getPercentOfQuantityOfWork), CONST.STYLEOFPROGRESSBAR.paddingLeft, CONST.STYLEOFPROGRESSBAR.height/2+CONST.STYLEOFPROGRESSBAR.lineWidth, (msgOfCSS.width - 2*CONST.STYLEOFPROGRESSBAR.paddingLeft))
         // 渲染制单号文本
         ctx.fillStyle = "#444";
         ctx.fillText(this.msgOfProgressBar.orderno, CONST.STYLEOFPROGRESSBAR.paddingLeft, CONST.STYLEOFPROGRESSBAR.lineWidth, (msgOfCSS.width - 2*CONST.STYLEOFPROGRESSBAR.paddingLeft));

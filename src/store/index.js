@@ -24,6 +24,8 @@ export default new Vuex.Store({
 		historyObjList: [], // 历史记录列表
 		activedIndexOfHistoryObjList: null, // 历史记录列表的索引
 		activedObjListOfProductLine: [], // 激活过的生产线索引与所在生产线最早更新的排产计划索引组成的键值对，形式为：{ `生产线索引`: `进度条在生产线中的索引`}
+		progressBarListOfTheSameOrderNo: [], // 制单号相同而激活的进度条列表，数据结构是一个对象，productLineIndex 存储生产线的索引，progressBarList 存储进度条的列表
+	
 	},
 	mutations: {
 		// 设置参数设置
@@ -132,6 +134,10 @@ export default new Vuex.Store({
 		// 设置历史记录列表的索引
 		setActivedIndexOfHistoryObjList(state, index) {
 			state.activedIndexOfHistoryObjList = index;
+		},
+		// 设置相同制单号的进度条列表信息
+		setProgressBarListOfTheSameOrderNo: function(state, data){
+			state.progressBarListOfTheSameOrderNo = data;
 		}
 	}
 })

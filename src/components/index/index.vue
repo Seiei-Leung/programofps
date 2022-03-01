@@ -16,6 +16,10 @@
         <v-windowOfBatchMinus v-if="isShowWindowOfBatchMinus"></v-windowOfBatchMinus>
         <!-- 右侧添加批量自选效率窗口 -->
         <v-windowOfBatchSettingEfficiency v-if="isShowWindowOfBatchSettingEfficiency"></v-windowOfBatchSettingEfficiency>
+        <!-- 定位窗口 -->
+        <v-windowOfLocate v-if="isShowWindowOfLocate"></v-windowOfLocate>
+        <!-- 接单分析 -->
+        <v-windowOfAnalysis v-if="isShowWindowOfAnalysis"></v-windowOfAnalysis>
         <!-- 提示组件 -->
         <v-toast v-show="isShowToast" v-bind:txt="toastTxt"></v-toast>
         <!-- 鼠标右击进度条显示菜单 -->
@@ -28,6 +32,8 @@
         <v-windowOfSeparateBill v-if="isShowWindowOfSeparateBill"></v-windowOfSeparateBill>
         <!-- 自选效率窗口 -->
         <v-windowOfSettingEfficiency v-if="isShowWindowOfSettingEfficiency"></v-windowOfSettingEfficiency>
+        <!-- 批注窗口 -->
+        <v-windowOfMemo v-if="isShowWindowOfMemo"></v-windowOfMemo>
         <!-- 拖动窗口图层 -->
         <v-backgroundForDrawWindow v-if="isShowBackgroundForDrawWindow"></v-backgroundForDrawWindow>
         <!-- loading 组件 -->
@@ -43,11 +49,13 @@ import backgroundCanvas from "../backgroundCanvas/backgroundCanvas";
 import progressBarCanvas from "../progressBarCanvas/progressBarCanvas";
 import ProgressBar from "../../vo/progressBar";
 import ProductLine from "../../vo/productLine";
-import M2V from "../../common/M2V";
 import DateUtil from "../../common/dateUtil";
 import FactoryCalendar from "../../vo/factoryCalendar";
 import windowOfAddProgressBar from "../windowOfAddProgressBar/windowOfAddProgressBar";
 import windowOfBatchMinus from "../windowOfBatchMinus/windowOfBatchMinus";
+import windowOfLocate from "../windowOfLocate/windowOfLocate";
+import windowOfAnalysis from "../windowOfAnalysis/windowOfAnalysis";
+import windowOfMemo from "../windowOfMemo/windowOfMemo";
 import windowOfBatchSettingEfficiency from "../windowOfBatchSettingEfficiency/windowOfBatchSettingEfficiency";
 import toast from "../toast/toast";
 import loading from "../loading/loading";
@@ -83,6 +91,18 @@ export default {
         // 是否显示批量自选效率窗口
         isShowWindowOfBatchSettingEfficiency: function() {
             return this.$store.state.moduleOfDisplay.isShowWindowOfBatchSettingEfficiency;
+        },
+        // 是否显示定位窗口
+        isShowWindowOfLocate: function() {
+            return this.$store.state.moduleOfDisplay.isShowWindowOfLocate;
+        },
+        // 是否显示接单分析窗口
+        isShowWindowOfAnalysis: function() {
+            return this.$store.state.moduleOfDisplay.isShowWindowOfAnalysis;
+        },
+        // 是否显示批注窗口
+        isShowWindowOfMemo: function() {
+            return this.$store.state.moduleOfDisplay.isShowWindowOfMemo;
         },
         // 是否显示 toast
         isShowToast: function() {
@@ -163,7 +183,9 @@ export default {
                 } else {
                     var argumentSetting = new ArgumentSetting(
                         response.data.data.afterMinusHasamend,
-                        response.data.data.afterMinusorchangeefficiencyHasremovegapmodel
+                        response.data.data.afterMinusorchangeefficiencyHasremovegapmodel,
+                        response.data.data.peopleNum,
+                        response.data.data.workhours
                     );
                     that.$store.commit("setArgumentSetting", argumentSetting);
                 }
@@ -303,6 +325,9 @@ export default {
         'v-windowOfAddProgressBar': windowOfAddProgressBar,
         "v-windowOfBatchMinus": windowOfBatchMinus,
         "v-windowOfBatchSettingEfficiency": windowOfBatchSettingEfficiency,
+        "v-windowOfLocate": windowOfLocate,
+        "v-windowOfAnalysis": windowOfAnalysis,
+        "v-windowOfMemo": windowOfMemo,
         "v-toast": toast,
         "v-loading": loading,
         "v-windowOfMenu": windowOfMenu,

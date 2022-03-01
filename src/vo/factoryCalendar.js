@@ -52,9 +52,9 @@ export default class FactoryCalendar {
     }
     
     /**
-     * 给予开启时间，需要工作天数 来获取工作日期列表
+     * 给予开启时间，没有节假日时预计完成时间 来获取有节假日时的完成时间
      * @param {*} startTime 开启日期
-     * @param {*} endTime 总需要工作天数
+     * @param {*} endTime 预计完成时间
      */
     getEndTime(startTime, endTime) {
         var dayCount = DateUtil.timeStampsToDayCount(startTime, endTime); // 需要多少工作日
@@ -68,5 +68,24 @@ export default class FactoryCalendar {
             timeStampTemp += DateUtil.timeStampOfOneDay;
         }
         return endTime + holidayCount*DateUtil.timeStampOfOneDay;
+    }
+
+    /**
+     * 给予结束时间，需要工作天数反推获取开始时间
+     * @param {*} endTime 结束时间
+     * @param {*} dayCount 总需要工作天数
+     */
+    getStartTime(endTime, dayCount) {
+        var timeStampTemp = endTime;
+        var holidayCount = 0;
+        var dayCountTemp = dayCount;
+        for (var i=0; i<dayCountTemp; i++) {
+            if (this.isHoliday(timeStampTemp)) {
+                dayCountTemp += 1;
+               holidayCount += 1;
+            }
+            timeStampTemp -= DateUtil.timeStampOfOneDay;
+        }
+        return endTime - (dayCount + holidayCount)*DateUtil.timeStampOfOneDay;
     }
 }

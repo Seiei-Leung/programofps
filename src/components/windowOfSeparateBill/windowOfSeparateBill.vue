@@ -104,6 +104,10 @@ export default {
                 this.$Message.error("拆分数量不能为零");
                 return;
             }
+            if (this.numOfSeparateBill > this.activedProgressBar.getQtyofbatcheddelivery - this.getQtyFinish) {
+                this.$Message.error("拆分数量不能大于未完成数");
+                return;
+            }
             var indexOfSelectedProductLine = this.indexOfSelectedProductLine; // 选择拆分到的生产线索引
             var activedProgressBar = this.activedProgressBar;
             var productLineList = this.productLineList;
@@ -136,7 +140,7 @@ export default {
              * 拆单操作
              */
             // 原排产减数
-            activedProgressBar.setQtyofbatcheddelivery(productLineList[activedProgressBar.getProductLineIndex], this.factoryCalendar, (activedProgressBar.getQtyofbatcheddelivery - this.numOfSeparateBill), activedProgressBar.getStartTime);
+            activedProgressBar.setQtyofbatcheddelivery(productLineList[activedProgressBar.getProductLineIndex], this.factoryCalendar, (activedProgressBar.getQtyofbatcheddelivery - this.numOfSeparateBill));
             // 创建新增生产线对象
             var newMsgOfProgressBar = {...activedProgressBar.getMsgOfProgressBar};
             newMsgOfProgressBar.id = CONST.PREFIXOFPROGRESSBARID.NEW + (new Date()).getTime();
@@ -155,10 +159,10 @@ export default {
             // 重新渲染
             // 被拆分的生产线渲染
             productLineList[activedProgressBar.getProductLineIndex].clear(this.ctxOfSource);
-            productLineList[activedProgressBar.getProductLineIndex].renderWithOutIdList(this.ctxOfSource, this.colorSetting, null, null);
+            productLineList[activedProgressBar.getProductLineIndex].renderWithOutIdList(this.ctxOfSource, this.colorSetting, null, []);
             // 拆分到的生产线渲染
             selectedProductLine.clear(this.ctxOfSource);
-            selectedProductLine.renderWithOutIdList(this.ctxOfSource, this.colorSetting, null, null);
+            selectedProductLine.renderWithOutIdList(this.ctxOfSource, this.colorSetting, null, []);
 
             /**
              * 记录历史操作

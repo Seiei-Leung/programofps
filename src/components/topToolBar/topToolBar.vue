@@ -23,6 +23,8 @@
         <div class="item item3" @click="showWindowOfBatchSettingEfficiency">批量自选效率 <Icon type="ios-list-box" /></div>
         <div class="item item4" @click="showNumberOfWork"><span v-show="!isShowNumberofwork">显示工作人数</span><span v-show="isShowNumberofwork">隐藏工作人数</span> <Icon type="ios-body" /></div>
         <div class="item item4"  @click="showWorkingHours"><span v-show="!isShowWorkingHours">显示工作时间</span><span v-show="isShowWorkingHours">隐藏工作时间</span> <Icon type="md-alarm" /></div>
+        <div class="item item4"  @click="showWindowOfLocate"><span>定位</span> <Icon type="ios-send" /></div>
+        <div class="item item4"  @click="showWindowOfAnalysis"><span>接单分析</span> <Icon type="md-list-box" /></div>
     </div>
 </template>
 
@@ -108,8 +110,8 @@ export default {
             this.$store.commit("setProductLineList", historyObj.getDataOfProductLineList);
             activedIndexListOfProductLine.forEach((item) => {
                 historyObj.getDataOfProductLineList[item].clear(this.ctxOfSource);
-                historyObj.getDataOfProductLineList[item].renderWithOutIdList(this.ctxOfSource, this.colorSetting, null, null);
-            })
+                historyObj.getDataOfProductLineList[item].renderWithOutIdList(this.ctxOfSource, this.colorSetting, null, []);
+            });
             if (historyObj.getIsAddProgress) {
                 this.$store.commit("setWaitingAddProgressList", historyObj.getDataOfWaitingAddProgressList);
             }
@@ -129,7 +131,7 @@ export default {
             this.$store.commit("setProductLineList", historyObj.getDataOfProductLineList);
             activedIndexListOfProductLine.forEach((item) => {
                 historyObj.getDataOfProductLineList[item].clear(this.ctxOfSource);
-                historyObj.getDataOfProductLineList[item].renderWithOutIdList(this.ctxOfSource, this.colorSetting, null, null);
+                historyObj.getDataOfProductLineList[item].renderWithOutIdList(this.ctxOfSource, this.colorSetting, null, []);
             })
             if (historyObj.getIsAddProgress) {
                 this.$store.commit("setWaitingAddProgressList", historyObj.getDataOfWaitingAddProgressList);
@@ -161,7 +163,7 @@ export default {
                     for (var i=progressBarIndex; i<progressListTemp.length; i++) {
                         var progressBar = progressListTemp[i]; // 排产计划对象
                         var obj = {};
-                        obj.productionLineId = progressBar.geProductLineId; // 更新生产线id
+                        obj.productionLineId = progressBar.getProductLineId; // 更新生产线id
                         obj.id = progressBar.getId; // 确定排产计划 id
                         obj.qtyFinish = progressBar.getQtyFinish; // 更新工作完成数量
                         obj.qtyofbatcheddelivery = progressBar.getQtyofbatcheddelivery; // 更新计划数量
@@ -245,7 +247,7 @@ export default {
                             // 重新渲染
                             productlineList.forEach((item) => {
                                 item.clear(that.ctxOfSource);
-                                item.renderWithOutIdList(that.ctxOfSource, that.colorSetting, null, null);
+                                item.renderWithOutIdList(that.ctxOfSource, that.colorSetting, null, []);
                             });
                             // 清空历史记录
                             that.$store.commit("setHistoryObjList", []);
@@ -350,7 +352,7 @@ export default {
                 // 生产线重新刷新数据，并渲染图层
                 activedProductLine.clear(this.ctxOfSource); // 清空图层
                 var activedProgressBarIndex = activedProductLine.addProgressInTheEnd(activedProgressBar, this.factoryCalendar); // 激活生产线添加进度条
-                activedProductLine.renderWithOutIdList(this.ctxOfSource, this.colorSetting, null, null); // 渲染生产线
+                activedProductLine.renderWithOutIdList(this.ctxOfSource, this.colorSetting, null, []); // 渲染生产线
 
                 /**
                  * 记录激活的生产线索引对象
@@ -384,6 +386,18 @@ export default {
         // 显示人数
         showNumberOfWork: function() {
             this.$store.commit("toggleNumberofwork");
+        },
+        // 显示定位窗口
+        showWindowOfLocate: function() {
+            this.$store.commit("closeAllWindow");
+			this.clearActivedProgressBar(); // 清空被选中的计划进度的框边颜色
+			this.$store.commit("setIsShowWindowOfLocate", true);
+        },
+        // 显示接单分析窗口
+        showWindowOfAnalysis: function() {
+            this.$store.commit("closeAllWindow");
+			this.clearActivedProgressBar(); // 清空被选中的计划进度的框边颜色
+			this.$store.commit("setIsShowWindowOfAnalysis", true);
         },
         // 显示工作时间
         showWorkingHours: function() {
@@ -467,7 +481,8 @@ export default {
                 }
             });
             return activedProductLine;
-        }
+        },
+
     }
 }
 </script>

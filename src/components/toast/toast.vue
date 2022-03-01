@@ -1,6 +1,6 @@
 <template>
     <div class="toast-component">
-        <div class="toastWrapper">
+        <div class="toastWrapper zIndexSuperTop">
             {{txt}}
         </div>
     </div>
@@ -20,7 +20,7 @@ export default {
 <style scoped>
 .toastWrapper {
     position: fixed;
-    top: 200px;
+    top: 10px;
     left: 0;
     right: 0;
     margin: auto;

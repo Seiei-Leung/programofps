@@ -16,6 +16,12 @@
             <div class="item" @click="showWindowOfSettingEfficiency">
                 自选效率
             </div>
+            <div class="item" @click="showModifyMemo">
+                添加批注/修改批注
+            </div>
+            <div class="item" @click="showDeleteMemo">
+                删除批注
+            </div>
             <div class="item" @click="showRemoveGapModel">
                 消除时间间隙
             </div>
@@ -40,6 +46,24 @@
             @on-cancel="hideRemoveGapModel">
             <p>是否消除该排产进度往后排产进度之间的时间间隙？</p>
         </Modal>
+        <Modal
+            v-model="isShowModifyMemo"
+            title="添加/修改批注"
+            @on-ok="modifyMemo"
+            @on-cancel="hideModifyMemo"
+            ok-text="确认"
+            cancel-text="取消"
+            :loading="true"
+            >
+            <Input v-model="inputMemo" maxlength="500" show-word-limit type="textarea" placeholder="输入批注" style="width: 100%" />
+        </Modal>
+        <Modal
+            v-model="isShowDeleteMemo"
+            title="删除批注"
+            @on-ok="deleteMemo"
+            @on-cancel="hideDeleteMemo">
+            <p>是否删除该批注？</p>
+        </Modal>
     </div>
 </template>
 
@@ -50,9 +74,12 @@ export default {
     data: function() {
         return {
             isShowDeleteModel: false, // 是否显示删除窗口
-            isShowRemoveGapModel: false, // 是否显示
+            isShowRemoveGapModel: false, // 是否显示时间空隙对话框
             factoryCalendar: null, // 工厂日历
             colorSetting: null, // 颜色设置
+            isShowModifyMemo: false, // 是否显示修改批注窗口
+            inputMemo: "", // 输入批注
+            isShowDeleteMemo: false, // 是否显示删除批注窗口
         }
     },
     computed: {
@@ -126,7 +153,7 @@ export default {
             // 删除数据
             productLineList[activedProgressBar.getProductLineIndex].removeProgressById(activedProgressBar.getId);
             productLineList[activedProgressBar.getProductLineIndex].clear(this.ctxOfSource);
-            productLineList[activedProgressBar.getProductLineIndex].renderWithOutIdList(this.ctxOfSource, this.colorSetting, null, null);
+            productLineList[activedProgressBar.getProductLineIndex].renderWithOutIdList(this.ctxOfSource, this.colorSetting, null, []);
             this.$store.commit("setProductLineList", productLineList);
 
             // 记录历史操作
@@ -168,7 +195,7 @@ export default {
             }
             // 重新渲染
             activedProductLine.clear(this.ctxOfSource);
-            activedProductLine.renderWithOutIdList(this.ctxOfSource, this.colorSetting, null, null);
+            activedProductLine.renderWithOutIdList(this.ctxOfSource, this.colorSetting, null, []);
 
             /**
              * 记录历史操作
@@ -193,7 +220,7 @@ export default {
             var activedProductLine = productLineList[activedProgressBar.getProductLineIndex];
             activedProductLine.lock(); // 上锁
             activedProductLine.clear(this.ctxOfSource);
-            activedProductLine.renderWithOutIdList(this.ctxOfSource, this.colorSetting, null, null);
+            activedProductLine.renderWithOutIdList(this.ctxOfSource, this.colorSetting, null, []);
             this.clearActivedProgressBar();
             this.$store.commit("setIsShowWindowOfMenu", false);
         },
@@ -210,11 +237,84 @@ export default {
                 activedProductLine.unLock(activedProductLine.getProgressList[activedProgressBarIndex - 1].getId);
             }
             activedProductLine.clear(this.ctxOfSource);
-            activedProductLine.renderWithOutIdList(this.ctxOfSource, this.colorSetting, null, null);
+            activedProductLine.renderWithOutIdList(this.ctxOfSource, this.colorSetting, null, []);
             this.clearActivedProgressBar();
             this.$store.commit("setIsShowWindowOfMenu", false);
+        },
+        // 显示批注窗口
+        showModifyMemo: function() {
+            this.inputMemo = this.activedProgressBar.getMemo;
+            this.isShowModifyMemo = true;
+        },
+        // 隐藏批注窗口
+        hideModifyMemo: function() {
+            this.isShowModifyMemo = false;
+        },
+        // 批注窗口的确认按钮
+        modifyMemo: function() {
+            var that = this;
+            var postObj = {
+                id: this.activedProgressBar.getId,
+                memo: this.inputMemo
+            };
+            this.axios.post(this.seieiURL + "productionplanningdetail/updateMemoOfProgress", postObj).then((response) => {
+                if (response.data.status) {
+                    that.$Message.error(response.data.msg);
+                    that.isInvaildSession(response.data.status);
+                } else {
+                    that.$Message.success("批注成功");
+                    // 更新 progressBar 对象的 memo
+                    that.activedProgressBar.setMemo(that.inputMemo);
+                    that.isShowModifyMemo = false;
+                    // 渲染进度条右上角批注标志
+                    var activedProductLine = that.productLineList[that.activedProgressBar.getProductLineIndex];
+                    // 重新渲染
+                    activedProductLine.clear(that.ctxOfSource);
+                    activedProductLine.renderWithOutIdList(that.ctxOfSource, that.colorSetting, null, []);
+                }
+            }).catch((error) => {
+                that.$Message.error({
+                  content: "服务器异常,请刷新！！",
+                  duration: 0,
+                  closable: true
+                });
+                console.log(error);
+            });
+        },
+        // 显示删除 Memo 窗口
+        showDeleteMemo: function() {
+            this.isShowDeleteMemo = true;
+        },
+        // 隐藏删除 Memo 窗口
+        hideDeleteMemo: function() {
+            this.isShowDeleteModel = false;
+        },
+        // 确认删除 Memo 按钮
+        deleteMemo: function() {
+            var that = this;
+            this.axios.get(this.seieiURL + "productionplanningdetail/deleteMemo?id=" + this.activedProgressBar.getId).then((response) => {
+                if (response.data.status) {
+                    that.isInvaildSession(response.data.status);
+                } else {
+                    that.$Message.success("删除成功");
+                    // 更新 progressBar 对象的 memo
+                    that.activedProgressBar.setMemo("");
+                    that.isShowModifyMemo = false;
+                    // 渲染进度条右上角批注标志
+                    var activedProductLine = that.productLineList[that.activedProgressBar.getProductLineIndex];
+                    // 重新渲染
+                    activedProductLine.clear(that.ctxOfSource);
+                    activedProductLine.renderWithOutIdList(that.ctxOfSource, that.colorSetting, null, []);
+                }
+            }).catch((error) => {
+                that.$Message.error({
+                  content: "服务器异常,请刷新！！",
+                  duration: 0,
+                  closable: true
+                });
+                console.log(error);
+            });
         }
-
     },
     created: function() {
         this.factoryCalendar = this.$store.state.factoryCalendarObj;

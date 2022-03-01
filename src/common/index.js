@@ -32,7 +32,7 @@ export default{
 						window.location.assign(href);
 					}
 				},
-				// 清空被选中的计划进度的框边颜色
+				// 清空被选中的计划进度的框边颜色(包括相同制单号引起的激活状态)
 				clearActivedProgressBar: function() {
 					var colorSetting = this.$store.state.colorSetting;
 					var ctxOfSource = this.$store.state.ctxOfSource;
@@ -42,9 +42,26 @@ export default{
 						// 当前激活的进度条有可能是新增进度条，因此没有生产线
 						if (activedProductLine != null) {
 							activedProductLine.clear(ctxOfSource);
-							activedProductLine.renderWithOutIdList(ctxOfSource, colorSetting, null, null);
+							activedProductLine.renderWithOutIdList(ctxOfSource, colorSetting, null, []);
 						}
 					}
+
+					// 清空相同制单号引起的激活状态
+					var progressBarListOfTheSameOrderNo = this.$store.state.progressBarListOfTheSameOrderNo;
+					for (var indexOfProgressBarListOfTheSameOrderNo=0; indexOfProgressBarListOfTheSameOrderNo < progressBarListOfTheSameOrderNo.length; indexOfProgressBarListOfTheSameOrderNo++) {
+						// 获取信息
+						var itemOfProgressBarListOfTheSameOrderNo = progressBarListOfTheSameOrderNo[indexOfProgressBarListOfTheSameOrderNo];
+						// 获取列表中所有进度条信息，并重新渲染
+						for (var indexOfProgressBar=0; indexOfProgressBar<itemOfProgressBarListOfTheSameOrderNo.progressBarList.length; indexOfProgressBar++) {
+							var productLineItem = this.productLineList[itemOfProgressBarListOfTheSameOrderNo.productLineIndex];
+							productLineItem.clear(ctxOfSource);
+							productLineItem.renderWithOutIdList(ctxOfSource, colorSetting, null, []);
+						}
+					}
+		
+					// 还原存储列表
+					progressBarListOfTheSameOrderNo = [];
+					this.$store.commit("setProgressBarListOfTheSameOrderNo", []);
 				},
         		// 获取待排产的详情列表
         		getAllForAddProgress: function() {
@@ -112,7 +129,7 @@ export default{
 							// 重新渲染
 							productlineList.forEach((item) => {
 								item.clear(that.$store.state.ctxOfSource);
-								item.renderWithOutIdList(that.$store.state.ctxOfSource, that.$store.state.colorSetting, null, null);
+								item.renderWithOutIdList(that.$store.state.ctxOfSource, that.$store.state.colorSetting, null, []);
 							});
 						}
 					}).catch((error) => {

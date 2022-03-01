@@ -95,7 +95,7 @@ export default {
                 	title: '离厂日期',
                 	key: 'deliveryoffactoryTime',
 					align: "center",
-                    width: 120,
+                    width: 100,
             		filter: {
               			type: 'Input'
             		},
@@ -106,7 +106,14 @@ export default {
 							DateUtil.timeStampToDate(params.row.deliveryoffactoryTime)
 						);
 					}
-				}
+				},
+				{
+                	title: '推算开始日期',
+                	key: 'calculateStartTimeByEndTimeAndDefaultSetting',
+                	align: "center",
+                    width: 100,
+                    sortable: true
+				},
 			],
 			waitingAddProgressList: [], // 待添加信息的列表源数据
 			waitingAddProgressListForShow: [], // 用于显示待添加信息列表
@@ -120,7 +127,8 @@ export default {
 				widthOfTable: CONST.STYLEOFWINDOWOFADDPROGRESSBAR.width - 2*CONST.STYLEOFWINDOW.lineWidth,
 				widthOfWindow: CONST.STYLEOFWINDOWOFADDPROGRESSBAR.width + "px"
 			}
-		}
+		},
+
 	},
 	methods: {
 		// 窗口显示
@@ -172,7 +180,13 @@ export default {
         }
 	},
 	created: function() {
-		this.waitingAddProgressList = this.$store.state.waitingAddProgressList;
+        var argumentSetting = this.$store.state.argumentSetting;
+        var factoryCalendar = this.$store.state.factoryCalendarObj;
+		var waitingAddProgressList = [...this.$store.state.waitingAddProgressList];
+		waitingAddProgressList.forEach((item) => {
+			item.calculateStartTimeByEndTimeAndDefaultSetting = ProgressBar.calculateStartTimeByEndTimeAndDefaultSetting(argumentSetting, factoryCalendar, item);
+		});
+		this.waitingAddProgressList = waitingAddProgressList;
 		this.waitingAddProgressListForShow = [...this.waitingAddProgressList];
 	},
 	components: {

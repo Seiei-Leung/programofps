@@ -407,9 +407,9 @@ export default class ProductLine {
      * @param {*} ctx 画布上下文 
      * @param {*} colorSetting 颜色设置 
      * @param {*} idList 无需渲染的id列表
-     * @param {*} indexOfActived 选中的计划
+     * @param {*} indexOfActivedList 选中激活的计划的索引列表(用于渲染激活状态)
      */
-    renderWithOutIdList(ctx, colorSetting, idList, indexOfActived) {
+    renderWithOutIdList(ctx, colorSetting, idList, indexOfActivedList) {
         var isLock = null; // 是否上锁
         // 整条生产线都上锁
         if (this.idOfLock == CONST.STATUSOFLOCK.LOCK) {
@@ -421,7 +421,7 @@ export default class ProductLine {
         }
         if (idList == null) {
             for (var i=0; i<this.progressList.length; i++) {
-                var isActived = (indexOfActived == i);
+                var isActived = (indexOfActivedList.indexOf(i) != -1);
                 // 如果锁的状态
                 if (this.idOfLock > 0) {
                     var indexOfLock = this.getProgressIndexById(this.idOfLock); // 解锁索引
@@ -436,7 +436,7 @@ export default class ProductLine {
             }
         } else {
             for (var i=0; i<this.progressList.length; i++) {
-                var isActived = (indexOfActived == i);
+                var isActived = (indexOfActivedList.indexOf(i) != -1);
                 // 是否在排除 id 的列表中
                 if (idList.indexOf(this.progressList[i].id) == -1) {
                     // 如果锁的状态

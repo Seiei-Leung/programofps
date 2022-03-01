@@ -1,5 +1,3 @@
-import DateUtil from "./dateUtil";
-
 // 常量信息
 export default class Const {
     constructor() {
@@ -47,7 +45,8 @@ export default class Const {
             height: 30,
             lineWidth: 1,
             fontStyle: "14px Arial",
-            paddingLeft: 4
+            paddingLeft: 4,
+            widthOfMemoIcon: 10
         }
     }
 
@@ -63,7 +62,15 @@ export default class Const {
     static get STYLEOFMENU() {
         return {
             width: 150,
-            height: 170
+            height: 218
+        }
+    }
+
+    // 批注窗口样式
+    static get SYTLEOFMEMO() {
+        return {
+            width: 250,
+            height: 150
         }
     }
 
@@ -80,6 +87,15 @@ export default class Const {
             heightOfFilterTable: 88, // 筛选标题的高度
             heightOfRow: 48, // 行高
             widthOfScrollBar: 15// 滚动条高度
+        }
+    }
+
+    // 鼠标 ICON 信息
+    static get MSGOFMOUSEICON() {
+        return {
+            width: 32,
+            URLOFSCISSORSCLOSE: "static/img/scissorsClose.ico",
+            URLOFSCISSORSOPEN: "static/img/scissorsOpen.ico"
         }
     }
 
@@ -100,12 +116,8 @@ export default class Const {
         }
     }
 
-    // 鼠标 ICON 信息
-    static get MSGOFMOUSEICON() {
-        return {
-            width: 32,
-            URLOFSCISSORSCLOSE: "static/img/scissorsClose.ico",
-            URLOFSCISSORSOPEN: "static/img/scissorsOpen.ico"
-        }
+    // 排产计算时，前多少天的效率是低效率的
+    static get DAYCOUNTFORLOWEFFICIENCY() {
+        return 3;
     }
 }

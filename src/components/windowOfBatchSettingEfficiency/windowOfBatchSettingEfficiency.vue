@@ -213,7 +213,7 @@ export default {
             
                 // 重新渲染
                 activedProductLine.clear(this.ctxOfSource);
-                activedProductLine.renderWithOutIdList(this.ctxOfSource, this.colorSetting, null, null);
+                activedProductLine.renderWithOutIdList(this.ctxOfSource, this.colorSetting, null, []);
 
                 /**
                  * 记录激活的生产线索引对象

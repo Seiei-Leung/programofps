@@ -70,7 +70,7 @@ export default class DateUtil {
 
     // 一天的总时间戳
     static get timeStampOfOneDay() {
-        return 24*60*60*1000;
+        return 86400000;
     }
     
     /**
@@ -173,6 +173,30 @@ export default class DateUtil {
     static get getTimeStampOfToday() {
         var now = new Date().getTime();
         return DateUtil.strToTimeStamp(DateUtil.timeStampToDate(now));
+    }
+
+    /**
+     * 获取当前后十二个月的年月对象列表，如：[{year: "2022", "month": "2"}, {year: "2022", "month": "3"}, ...]
+     */
+    static get getYearAndMonthObjListForAYear() {
+        var now = new Date();
+        var resultList = [];
+        // 当前年份
+        var year = now.getFullYear();
+        var month = now.getMonth() + 1;
+        for (var i=0; i<12; i++) {
+            var monthTemp = month+i;
+            var yearTemp = year;
+            if (monthTemp == 13) {
+                monthTemp = 1;
+                yearTemp += 1;
+            }
+            resultList.push({
+                "year": yearTemp,
+                "month": monthTemp
+            })
+        }
+        return resultList;
     }
 
 }

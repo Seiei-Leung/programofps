@@ -8,8 +8,9 @@
             v-bind:height="msgOfCanvas.height"
             @dblclick="dblclickOfSourceCanvas($event)"
             @mousedown="mousedownOfSourceCanvas($event)"
-            @mousemove="mousemoveOfSourceCavnas($event)"
-            @mouseup="mouseupOfSourceCavnas($event)"
+            @mousemove="mousemoveOfSourceCanvas($event)"
+            @mouseup="mouseupOfSourceCanvas($event)"
+            @mouseleave="mouseleaveOfSourceCanvas($event)"
             @ctrlDown="clickDownCtrlOfSourceCanvas($event)"
             @ctrlUp="clickUpCtrlOfSourceCanvas($event)"
             @contextmenu.prevent="showWindowOfMenu($event)"
@@ -35,7 +36,7 @@ import DateUtil from "../../common/dateUtil";
 import V2M from "../../common/V2M";
 import ProgressBar from "../../vo/progressBar";
 
-var tOfMouseIcon; // 源画布悬浮计时器
+var tOfMemo; // 源画布悬浮显示批注计时器
 
 export default {
     data: function() {
@@ -89,7 +90,7 @@ export default {
         this.$store.commit('setCtxOfTemp', ctxOfTemp);
         this.ctxOfTemp = ctxOfTemp;
         this.productLineList.forEach((item) => {
-            item.renderWithOutIdList(this.ctxOfSource, this.colorSetting, null, null);
+            item.renderWithOutIdList(this.ctxOfSource, this.colorSetting, null, []);
         });
         // 向画布绑定点击 ctrl 事件
         // 先在 window 上监听键盘事件
@@ -123,16 +124,19 @@ export default {
         */
         // 点击 ctrl 事件
         clickDownCtrlOfSourceCanvas: function(e) {
+            clearTimeout(tOfMemo);
             this.isCtrlActived = true;
         },
         // 松开 ctrl 事件
         clickUpCtrlOfSourceCanvas: function(e) {
+            clearTimeout(tOfMemo);
             this.isCtrlActived = false;
             document.querySelector('body').style.cursor = "default";
             this.mouseIcon.style.left = -100 + 'px';
         },
         // 在源数据画布中点击
         dblclickOfSourceCanvas: function(e) {
+            clearTimeout(tOfMemo);
             if (this.isCtrlActived) {
                 return;
             }
@@ -171,23 +175,33 @@ export default {
 
             // 清除源画布
             activedProductLine.clear(this.ctxOfSource);
-            activedProductLine.renderWithOutIdList(this.ctxOfSource, this.colorSetting, [activedProgressBar.getId], null);
+            activedProductLine.renderWithOutIdList(this.ctxOfSource, this.colorSetting, [activedProgressBar.getId], []);
 
             // 渲染移动画布
             activedProgressBar.render(this.ctxOfTemp, this.colorSetting, false, true, false);
             this.$store.commit("setActivedProgressBar", activedProgressBar);
         },
         // 在源数据画布移动
-        mousemoveOfSourceCavnas: function(e) {
-            //clearTimeout(tOfMouseIcon);
+        mousemoveOfSourceCanvas: function(e) {
             var that = this;
             var x = e.clientX - this.msgOfCanvas.left + window.pageXOffset; // 相对于整个画布中的鼠标当前对应的 X 坐标
             var y = e.clientY - this.msgOfCanvas.top + window.pageYOffset; // 相对于整个画布中的鼠标当前对应的 Y 坐标
+
+            /**
+             * 取消计时器，关闭批注窗口
+             */
+            clearTimeout(tOfMemo);
+            this.$store.commit("setIsShowWindowOfMemo", false);
+
             // 是否一直点击 ctrl 键
             if (!that.isCtrlActived) {
                 // 还原鼠标图标及关闭 toast
                 that.hideMouseIcon();
                 that.$store.commit("hideToast");
+                // 创建计时器，用于显示批注
+                tOfMemo = setTimeout(() => {
+                    that.showWindowOfMemo(e);
+                }, 500);
                 return;
             }
             var activedProgressBar =that.getProgressBarByXY(e); // 获取当前鼠标悬浮对应的进度条
@@ -219,12 +233,13 @@ export default {
             var xOfActivedProgressBarStartTime = activedProgressBar.msgOfCSS.left; // 当前激活进度条相对于整个画布的 LEFT 数值
             var widthOfActivedProgressBar = activedProgressBar.msgOfCSS.width; // 当前激活进度条的长度
             // 计算比例从而算出所占的制单数量
-            var numOfSeparateBill = (((x-xOfActivedProgressBarStartTime)/widthOfActivedProgressBar)*activedProgressBar.getQtyofbatcheddelivery).toFixed(0);
+            var numOfSeparateBill = (((x-xOfActivedProgressBarStartTime)/widthOfActivedProgressBar)*(activedProgressBar.getQtyofbatcheddelivery-activedProgressBar.getQtyFinish)).toFixed(0);
             that.$store.commit("showToast", "拆分件数：" + numOfSeparateBill);
             that.numOfSeparateBill = numOfSeparateBill;
         },
         // 源画布鼠标点击事件
         mousedownOfSourceCanvas: function(e) {
+            clearTimeout(tOfMemo);
             // 清空激活进度条，关闭 menu 菜单
             this.clearActivedProgressBar();
             this.$store.commit("setIsShowWindowOfMenu", false);
@@ -235,13 +250,19 @@ export default {
             this.separateBill(activedProgressBar);
         },
         // 源画布鼠标松开事件
-        mouseupOfSourceCavnas: function(e) {
+        mouseupOfSourceCanvas: function(e) {
+            clearTimeout(tOfMemo);
             if (this.isCtrlActived) {
                 this.mouseIconUrl = CONST.MSGOFMOUSEICON.URLOFSCISSORSOPEN;
             }
         },
+        // 鼠标离开源画布
+        mouseleaveOfSourceCanvas: function(e) {
+            clearTimeout(tOfMemo);
+        },
         // 右键显示菜单
         showWindowOfMenu: function(e) {
+            clearTimeout(tOfMemo);
             // 获取当前激活的进度条
             var progressBar = this.getProgressBarByXY(e);
             // 如果没有激活进度条则不显示
@@ -258,7 +279,7 @@ export default {
             // 渲染新的选中计划的边框颜色
             var activedProductLine = this.productLineList[progressBar.getProductLineIndex];
             activedProductLine.clear(this.ctxOfSource);
-            activedProductLine.renderWithOutIdList(this.ctxOfSource, this.colorSetting, null, activedProductLine.getProgressIndexById(progressBar.getId));
+            activedProductLine.renderWithOutIdList(this.ctxOfSource, this.colorSetting, null, [activedProductLine.getProgressIndexById(progressBar.getId)]);
 
             // 调整位置
             var left = e.clientX;
@@ -279,6 +300,35 @@ export default {
             this.$store.commit("setMsgOfWindowOfMenu", obj);
             this.$store.commit("closeAllWindow");
             this.$store.commit("setIsShowWindowOfMenu", true);
+        },
+        // 显示批注窗口
+        showWindowOfMemo: function(e) {
+            var that = this;
+            var activedProgressBar =that.getProgressBarByMemoXY(e); // 获取激活进度条
+            // 检测进度条是否为空且其批注是否为空
+            if (activedProgressBar != null && activedProgressBar.getMemo != null && activedProgressBar.getMemo != "") 
+            {
+                // 确定批注窗口的显示位置
+                var left = e.clientX;
+                var top = e.clientY;
+                if (e.clientX + CONST.SYTLEOFMEMO.width > window.innerWidth) {
+                    left = e.clientX - CONST.SYTLEOFMEMO.width;
+                }
+                if (e.clientY + CONST.SYTLEOFMEMO.height > window.innerHeight) {
+                    top = e.clientY - CONST.SYTLEOFMEMO.height;
+                }
+                // 设置窗口位置
+                var obj = {
+                    left: left + "px",
+                    top: top + "px",
+                    width: CONST.SYTLEOFMEMO.width + "px",
+                    height: CONST.SYTLEOFMEMO.height + "px"
+                }
+
+                that.$store.commit("setMsgOfWindowOfMemo", obj);
+                that.$store.commit("setIsShowWindowOfMemo", true);
+                that.$store.commit("setTxtOfMemo", activedProgressBar.getMemo);
+            }
         },
 
         /*
@@ -399,7 +449,7 @@ export default {
                 if (beforeProductLine) {
                     // 该排产计划已经排产，则恢复旧生产线数据渲染
                     beforeProductLine.clear(this.ctxOfSource);
-                    beforeProductLine.renderWithOutIdList(this.ctxOfSource, this.colorSetting, null, null);
+                    beforeProductLine.renderWithOutIdList(this.ctxOfSource, this.colorSetting, null, []);
                 }
                 return;
             }
@@ -421,7 +471,7 @@ export default {
                     if (beforeProductLine) {
                         // 该排产计划已经排产，则恢复旧生产线数据渲染
                         beforeProductLine.clear(this.ctxOfSource);
-                        beforeProductLine.renderWithOutIdList(this.ctxOfSource, this.colorSetting, null, null);
+                        beforeProductLine.renderWithOutIdList(this.ctxOfSource, this.colorSetting, null, []);
                     }
                     return;
                 }
@@ -444,7 +494,7 @@ export default {
                     if (beforeProductLine) {
                         // 该排产计划已经排产，则恢复旧生产线数据渲染
                         beforeProductLine.clear(this.ctxOfSource);
-                        beforeProductLine.renderWithOutIdList(this.ctxOfSource, this.colorSetting, null, null);
+                        beforeProductLine.renderWithOutIdList(this.ctxOfSource, this.colorSetting, null, []);
                     }
                    return;
                 }
@@ -496,7 +546,7 @@ export default {
              */
             activedProductLine.clear(this.ctxOfSource); // 清空图层
             var activedProgressIndex = activedProductLine.addProgress(activedProgressBar, this.factoryCalendar); // 激活生产线添加进度条
-            activedProductLine.renderWithOutIdList(this.ctxOfSource, this.colorSetting, null, null); // 渲染生产线
+            activedProductLine.renderWithOutIdList(this.ctxOfSource, this.colorSetting, null, []); // 渲染生产线
 
             /**
              * 记录历史操作
@@ -534,6 +584,24 @@ export default {
             }
             // 循环完都没有，返回 null
             return result;
+        },
+        // 在数据画布悬浮，如果坐标在某进度条的 Memo 三角形范围内，获取对应的激活的进度条
+        getProgressBarByMemoXY: function(e) {
+            var x = e.clientX - this.msgOfCanvas.left + window.pageXOffset;  // 相对于整个画布中的鼠标当前对应的 X 坐标
+            var y = e.clientY - this.msgOfCanvas.top + window.pageYOffset; // 相对于整个画布中的鼠标当前对应的 Y 坐标
+            // 获取当前激活生产线
+            var productLineIndex = V2M.yToProductLineIndex(this.productLineList, y);
+            var progressBarList = this.productLineList[productLineIndex].getProgressList;
+            var result = null;
+            // 循环当前激活的生产线的进度条，检测是否在点击范围内
+            for (var progressIndex=0; progressIndex<progressBarList.length; progressIndex++) {
+                if (progressBarList[progressIndex].isInMemoArea(x, y)) {
+                    result = progressBarList[progressIndex];
+                }
+            }
+            // 循环完都没有，返回 null
+            return result;
+
         },
         // 设置鼠标图标
         hideMouseIcon() {
@@ -574,9 +642,10 @@ export default {
                  * 拆单操作
                  */
                 // 分配到新进度条的制单数量
-                var qtyofbatcheddeliveryForNewMsgOfProgressBar = activedProgressBar.getQtyofbatcheddelivery - numOfSeparateBill;
+                var qtyofbatcheddeliveryForNewMsgOfProgressBar = activedProgressBar.getQtyofbatcheddelivery - activedProgressBar.getQtyFinish - numOfSeparateBill;
+                
                 // 原排产减数
-                activedProgressBar.setQtyofbatcheddelivery(productLineList[activedProgressBar.getProductLineIndex], this.factoryCalendar, numOfSeparateBill, activedProgressBar.getStartTime);
+                activedProgressBar.setQtyofbatcheddelivery(productLineList[activedProgressBar.getProductLineIndex], this.factoryCalendar, Number(activedProgressBar.getQtyFinish) + Number(numOfSeparateBill), activedProgressBar.getStartTime);
                 // 创建新增进度条对象
                 var newMsgOfProgressBar = {...activedProgressBar.getMsgOfProgressBar};
                 newMsgOfProgressBar.id = CONST.PREFIXOFPROGRESSBARID.NEW + (new Date()).getTime();
@@ -596,7 +665,7 @@ export default {
                 activedProductLine.addProgress(newProgressBar, this.factoryCalendar);
                 // 重新渲染
                 activedProductLine.clear(this.ctxOfSource);
-                activedProductLine.renderWithOutIdList(this.ctxOfSource, this.colorSetting, null, null);
+                activedProductLine.renderWithOutIdList(this.ctxOfSource, this.colorSetting, null, []);
 
                 /**
                  * 记录历史操作
@@ -640,7 +709,7 @@ export default {
                 if (beforeProductLine) {
                     // 该排产计划已经排产，则恢复旧生产线数据渲染
                     beforeProductLine.clear(this.ctxOfSource);
-                    beforeProductLine.renderWithOutIdList(this.ctxOfSource, this.colorSetting, null, null);
+                    beforeProductLine.renderWithOutIdList(this.ctxOfSource, this.colorSetting, null, []);
                 }
                 return;
             }
@@ -653,7 +722,7 @@ export default {
                 if (beforeProductLine) {
                     // 该排产计划已经排产，则恢复旧生产线数据渲染
                     beforeProductLine.clear(this.ctxOfSource);
-                    beforeProductLine.renderWithOutIdList(this.ctxOfSource, this.colorSetting, null, null);
+                    beforeProductLine.renderWithOutIdList(this.ctxOfSource, this.colorSetting, null, []);
                 }
                 return;
             }
@@ -688,7 +757,7 @@ export default {
              */
             // 松开鼠标后，激活进度条的初步更新数据，初步渲染
             var comebinedQty = Number(progressBarForCombine.getQtyofbatcheddelivery) + Number(activedProgressBar.getQtyofbatcheddelivery);
-            progressBarForCombine.setQtyofbatcheddelivery(activedProductLine, this.factoryCalendar, comebinedQty, progressBarForCombine.getStartTime);
+            progressBarForCombine.setQtyofbatcheddelivery(activedProductLine, this.factoryCalendar, comebinedQty);
             // 合并制单号
             if (progressBarForCombine.getMsgOfProgressBar.orderno != activedProgressBar.getMsgOfProgressBar.orderno) {
                 progressBarForCombine.setOrderno(progressBarForCombine.getMsgOfProgressBar.orderno + "/" + activedProgressBar.getMsgOfProgressBar.orderno);
@@ -700,7 +769,7 @@ export default {
             activedProductLine.clear(this.ctxOfSource); // 清空图层
             activedProductLine.removeProgressById(progressBarForCombine.getId); // 删除合并进度条，为的是再次添加，这样合并进度条的后续进度条就会自动后移
             var activedProgressIndex = activedProductLine.addProgress(progressBarForCombine, this.factoryCalendar); // 激活生产线添加进度条
-            activedProductLine.renderWithOutIdList(this.ctxOfSource, this.colorSetting, null, null); // 渲染生产线
+            activedProductLine.renderWithOutIdList(this.ctxOfSource, this.colorSetting, null, []); // 渲染生产线
 
             /**
              * 记录历史操作
